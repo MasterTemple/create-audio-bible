@@ -22,7 +22,7 @@ Create an audio Bible by taking out and joining together segments of the Scriptu
 ## `.env`
 
 ```env
-SERMON_AUDIO_API_KEY="" # necessary for using SermonAudio
+SA_API_KEY="" # necessary for using SermonAudio
 ```
 
 # CLI

@@ -1,20 +1,10 @@
 import os
 import json
 import sys
-import shutil
+import .download
 
-CURRENT_PROJECT_FILE = ".current_project.txt"
+from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, TRANSCRIPTS_DIR, DOWNLOADS_DIR, TEMP_DOWNLOADS_DIR
 
-DATA_DIR = "data/"
-PROJECT_DIR = DATA_DIR + "projects/"
-PROJECT_DIR_AUDIO = "audio/"
-PROJECT_DIR_EXPORT = "export/"
-PROJECT_DIR_EXPORT_VERSES = PROJECT_DIR_EXPORT + "verses/"
-PROJECT_DIR_EXPORT_CHAPTERS = PROJECT_DIR_EXPORT + "chapters/"
-PROJECT_CONFIG_FILE_NAME = "config.json"
-TRANSCRIPTS_DIR = DATA_DIR + "transcripts/"
-DOWNLOADS_DIR = DATA_DIR + "downloads/"
-TEMP_DOWNLOADS_DIR = DATA_DIR + "downloads/temp/"
 
 def create_project(project_name, book, sources_file):
     new_project_dir = os.path.join(os.getcwd(), PROJECT_DIR, project_name)
@@ -52,6 +42,15 @@ def use_project(project_name):
     with open(CURRENT_PROJECT_FILE, "w") as f:
         f.write(project_name)
     print(f"Now using project '{project_name}'.")
+
+def get_current_project() -> str:
+    with open(CURRENT_PROJECT_FILE, "r") as f:
+        project_name = f.read()
+    return project_name
+
+def download_project_files() -> None:
+    project_name = get_current_project()
+    download.download_project_files(project_name)
 
 def main():
     if len(sys.argv) < 2:

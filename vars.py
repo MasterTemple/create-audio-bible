@@ -1,0 +1,12 @@
+CURRENT_PROJECT_FILE = ".current_project.txt"
+
+DATA_DIR = "data/"
+PROJECT_DIR = DATA_DIR + "projects/"
+PROJECT_DIR_AUDIO = "audio/"
+PROJECT_DIR_EXPORT = "export/"
+PROJECT_DIR_EXPORT_VERSES = PROJECT_DIR_EXPORT + "verses/"
+PROJECT_DIR_EXPORT_CHAPTERS = PROJECT_DIR_EXPORT + "chapters/"
+PROJECT_CONFIG_FILE_NAME = "config.json"
+TRANSCRIPTS_DIR = DATA_DIR + "transcripts/"
+DOWNLOADS_DIR = DATA_DIR + "downloads/"
+TEMP_DOWNLOADS_DIR = DATA_DIR + "downloads/temp/"
