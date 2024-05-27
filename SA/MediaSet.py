@@ -1,5 +1,5 @@
 from __future__ import annotations
-from Media import Media
+from SA.Media import Media
 
 
 class MediaSet:

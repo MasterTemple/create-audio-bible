@@ -5,5 +5,9 @@ node_modules
 *.mov
 .env
 data/projects/**/*
+data/downloads/
+data/transcripts/*
 sources.txt
 .current_project.txt
+__pycache__
+SA/__pycache__

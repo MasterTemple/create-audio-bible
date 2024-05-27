@@ -31,5 +31,14 @@ Note: `cab` (`c`reate `a`udio `b`ible) is a shell script that just means you don
 
 **Create Project:** `cab create "project-name" "book" "sources.txt"`
 - `sources.txt` should be a list of URLs separated by newlines (more input methods will be created later)
+- in the future i could make arguments like `-saseries 14013` or `-playlist `
 
 **Switch to Project:** `cab use "project-name"`
+
+# Transcription
+
+You need to set up [WhisperX](https://github.com/m-bain/whisperX)
+```bash
+# run this only after everything is installed
+conda activate whisperx
+```

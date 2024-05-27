@@ -1,6 +1,6 @@
-from SermonFilter import SermonFilter
-from Sermon import Sermon
-from Broadcaster import Broadcaster
+from SA.SermonFilter import SermonFilter
+from SA.Sermon import Sermon
+from SA.Broadcaster import Broadcaster
 import requests
 import json
 import os
@@ -29,6 +29,7 @@ class SermonAudioAPI:
 
     def get_sermons(self) -> list[Sermon]:
         j: list[dict] = self.get("/sermons/")
+        print(j)
         j = j['results']
         sermons: list[Sermon] = list(map(lambda s: Sermon.from_dict(s), j))
         return sermons

@@ -1,7 +1,7 @@
 from __future__ import annotations
-from Speaker import Speaker
-from Broadcaster import Broadcaster
-from MediaSet import MediaSet
+from SA.Speaker import Speaker
+from SA.Broadcaster import Broadcaster
+from SA.MediaSet import MediaSet
 import requests
 
 

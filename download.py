@@ -1,11 +1,12 @@
 import os
+import requests
 import re
 import json
 from pytube import Playlist
 from pytube import YouTube
-from .SA.SermonAudio import SermonAudioAPI
+from SA.SermonAudio import SermonAudioAPI
 import json
-from .SA.Sermon import Sermon
+from SA.Sermon import Sermon
 
 from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, TRANSCRIPTS_DIR, DOWNLOADS_DIR, TEMP_DOWNLOADS_DIR
 
@@ -19,23 +20,32 @@ def download_project_files(project_name) -> None:
 def download_file(source):
     # YouTube Playlist
     if bool(re.search("https://www.youtube.com/playlist", source)):
-        # id = re.match("https://www.youtube.com/playlist?list=([A-z0-9]+)", source)[1]
+        # id = re.search("https://www.youtube.com/playlist?list=([A-z0-9]+)", source)[1]
         download_playlist(source)
     # YouTube Links
     elif bool(re.search("https://www.youtube.com/watch", source)):
-        # id = re.match("https://www.youtube.com/watch?v=([A-z0-9]+)", source)[1]
+        # id = re.search("https://www.youtube.com/watch?v=([A-z0-9]+)", source)[1]
         download_youtube_video_as_mp3(source)
     # SermonAudio Series
     elif bool(re.search("https://beta.sermonaudio.com/series/", source)):
-        id = re.match(r"https://beta.sermonaudio.com/series/(\d+)", source)[1]
+        id = re.search(r"https://beta.sermonaudio.com/series/(\d+)", source)[1]
         download_sermon_audio_series(id)
     # SermonAudio Links
     elif bool(re.search("https://beta.sermonaudio.com/sermons/", source)):
-        id = re.match(r"https://beta.sermonaudio.com/sermons/(\d+)", source)[1]
+        id = re.search(r"https://beta.sermonaudio.com/sermons/(\d+)", source)[1]
         download_sermon_audio_file(id)
     else:
-        print(f"Invalid URL: {source}")
-        exit(1)
+        id = re.search(r"(\d+)\.mp3$", source)[1]
+        print(f"Downloading Audio '{source}' [{id}]")
+        download_from_url(source, id)
+        # print(f"Invalid URL: {source}")
+        # exit(1)
+
+def download_from_url(url, id):
+    response = requests.get(url, stream=True)
+    with open(os.path.join(DOWNLOADS_DIR, f"{id}.mp3"), 'wb') as fd:
+        for chunk in response.iter_content(chunk_size=1024):
+            fd.write(chunk)
 
 def download_sermon_audio_series(id):
     sa = SermonAudioAPI()
@@ -46,20 +56,32 @@ def download_sermon_audio_series(id):
     while keep_going:
         sa.params.setPage(page)
         sermons: list[Sermon] = sa.get_sermons()
+        print(sermons)
         all_sermons.extend(sermons)
         page += 1
         if len(sermons) == 0:
             break
+    print(all_sermons)
     for sermon in all_sermons:
-        sermon.download_audio(os.path.join(DOWNLOADS_DIR, f"{sermon.sermonID}.mp3"))
+        new_file = os.path.join(DOWNLOADS_DIR, f"{sermon.sermonID}.mp3")
+        if not os.path.exists(new_file):
+            print(f"Downloading Sermon '{sermon.fullTitle}' [{sermon.sermonID}]")
+            sermon.download_audio(new_file)
 
 def download_sermon_audio_file(id):
     sa = SermonAudioAPI()
     sermon: Sermon = sa.get_sermon(id)
-    sermon.download_audio(os.path.join(DOWNLOADS_DIR, f"{sermon.sermonID}.mp3"))
+    new_file = os.path.join(DOWNLOADS_DIR, f"{sermon.sermonID}.mp3")
+    if not os.path.exists(new_file):
+        print(f"Downloading Sermon '{sermon.fullTitle}' [{sermon.sermonID}]")
+        sermon.download_audio(new_file)
 
 def download_youtube_video_as_mp3(url):
-    id = re.match("https://www.youtube.com/watch?v=([A-z0-9]+)", url)[1]
+    id = re.search("https://www.youtube.com/watch?v=([A-z0-9]+)", url)[1]
+    print(f"Downloading YouTube Video '{url}'")
+    new_file = os.path.join(DOWNLOADS_DIR, f"{id}.mp3")
+    if os.path.exists(new_file):
+        return
     yt = YouTube(url)
     audio = yt.streams.filter(only_audio=True).first()
     out_file = audio.download(output_path=os.path.join(DOWNLOADS_DIR))

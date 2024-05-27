@@ -1,7 +1,8 @@
 import os
 import json
 import sys
-import .download
+import download
+# import transcribe
 
 from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, TRANSCRIPTS_DIR, DOWNLOADS_DIR, TEMP_DOWNLOADS_DIR
 
@@ -52,11 +53,19 @@ def download_project_files() -> None:
     project_name = get_current_project()
     download.download_project_files(project_name)
 
+def transcribe_project_files() -> None:
+    # project_name = get_current_project()
+    # transcribe.transcribe_project_files(project_name)
+    # transcribe.transcribe_all_files()
+    pass
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: cab <command> [arguments]")
         print("Usage: cab create <project-name> <book> <sources.txt>")
         print("Usage: cab use <project-name>")
+        print("Usage: cab download")
+        print("Usage: cab transcribe")
         return
 
     command = sys.argv[1]
@@ -68,6 +77,10 @@ def main():
         book = sys.argv[3]
         sources_file = sys.argv[4]
         create_project(project_name, book, sources_file)
+    elif command == "download":
+        download_project_files()
+    elif command == "transcribe":
+        transcribe_project_files()
     elif command == "use":
         if len(sys.argv) != 3:
             print("Usage: cab use <project-name>")
