@@ -51,6 +51,8 @@ class Sermon:
 
     def download_audio(self, download_path: str):
         audio_files = self.media.audio
+        if len(audio_files) == 0:
+            return
         # get highest bitrate file
         file = sorted(audio_files, key=lambda f: -f.bitrate)[0]
         url = file.downloadURL

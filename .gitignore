@@ -9,5 +9,6 @@ data/downloads/
 data/transcripts/*
 sources.txt
 .current_project.txt
+sources/*
 __pycache__
 SA/__pycache__

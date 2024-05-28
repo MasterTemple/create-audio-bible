@@ -44,6 +44,10 @@ def use_project(project_name):
         f.write(project_name)
     print(f"Now using project '{project_name}'.")
 
+def list_projects():
+    for file in os.listdir(PROJECT_DIR):
+        print(file)
+
 def get_current_project() -> str:
     with open(CURRENT_PROJECT_FILE, "r") as f:
         project_name = f.read()
@@ -64,6 +68,7 @@ def main():
         print("Usage: cab <command> [arguments]")
         print("Usage: cab create <project-name> <book> <sources.txt>")
         print("Usage: cab use <project-name>")
+        print("Usage: cab list")
         print("Usage: cab download")
         print("Usage: cab transcribe")
         return
@@ -81,6 +86,8 @@ def main():
         download_project_files()
     elif command == "transcribe":
         transcribe_project_files()
+    elif command == "list":
+        list_projects()
     elif command == "use":
         if len(sys.argv) != 3:
             print("Usage: cab use <project-name>")

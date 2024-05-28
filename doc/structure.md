@@ -10,6 +10,16 @@ data/
 ├──projects/
 │  └── {name}/
 │      ├── config.json
+│      ├── files.json
+│      ├── csv/
+│      │   ├── searches.csv
+│      │   ├── segments.csv
+│      │   └── sources.csv
+│      ├── downloads/
+│      │   ├── temp/
+│      │   └── {id}.{ext}
+│      ├── transcripts/
+│      │   └── {id}.json
 │      ├── audio/
 │      │   └── {chapter}-{verse}-{id}-{start}-{stop}-{amplification}.{ext}
 │      └── export/
@@ -46,3 +56,4 @@ Example `config.json`
 - SermonAudio Series
 - SermonAudio Links
 `cover_image` is the image to be on the cover of the exported files
+`files.json` lists all the ids of files
