@@ -1,3 +1,4 @@
+-- search `/mnt/windows/Users/dgmastertemple/.vscode/sermon_indexing/sermon_indexing/sermon_transcription`
 -- should be project name
 set @db_name = '%s';
 set @csv_path = '%s';

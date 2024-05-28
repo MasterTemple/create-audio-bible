@@ -45,7 +45,7 @@ def download_file(source):
 def download_from_url(url, id):
     project_name = get_current_project()
     response = requests.get(url, stream=True)
-    with open(os.path.join(project_name, PROJECT_DOWNLOADS_DIR, f"{id}.mp3"), 'wb') as fd:
+    with open(os.path.join(PROJECT_DIR, project_name, PROJECT_DOWNLOADS_DIR, f"{id}.mp3"), 'wb') as fd:
         for chunk in response.iter_content(chunk_size=1024):
             fd.write(chunk)
 
