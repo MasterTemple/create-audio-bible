@@ -2,9 +2,10 @@ import os
 import json
 import sys
 import download
-# import transcribe
+import transcribe
 
-from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, TRANSCRIPTS_DIR, DOWNLOADS_DIR, TEMP_DOWNLOADS_DIR
+from functions import get_current_project
+from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR
 
 
 def create_project(project_name, book, sources_file):
@@ -13,11 +14,33 @@ def create_project(project_name, book, sources_file):
         print(f"Error: Project '{project_name}' already exists.")
         return
 
+    # {name}/
+    # ├── config.json
+    # ├── downloads/
+    # │   ├── temp/
+    # │   │   └── {id}.{ext}
+    # │   └── {id}.mp3
+    # ├── transcripts/
+    # │   └── {id}.json
+    # ├── csv/
+    # │   ├── searches.csv
+    # │   ├── segments.csv
+    # │   └── sources.csv
+    # ├── audio/
+    # │   └── {chapter}-{verse}-{id}-{start}-{stop}-{amplification}.mp3
+    # └── export/
+    #     ├── verses/
+    #     │   └── {book} {chapter}:{verse}.mp3
+    #     └── chapters/
+    #         └── {book} {chapter}.mp3
     os.makedirs(new_project_dir)
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_AUDIO))
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_EXPORT))
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_EXPORT_VERSES))
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_EXPORT_CHAPTERS))
+    os.makedirs(os.path.join(new_project_dir, PROJECT_TRANSCRIPTS_DIR))
+    os.makedirs(os.path.join(new_project_dir, PROJECT_DOWNLOADS_DIR))
+    os.makedirs(os.path.join(new_project_dir, PROJECT_TEMP_DOWNLOADS_DIR))
 
     with open(sources_file, 'r') as f:
         sources = [s.strip() for s in f.read().splitlines()]
@@ -48,18 +71,18 @@ def list_projects():
     for file in os.listdir(PROJECT_DIR):
         print(file)
 
-def get_current_project() -> str:
-    with open(CURRENT_PROJECT_FILE, "r") as f:
-        project_name = f.read()
-    return project_name
+
+def list_current_project() -> None:
+    project_name = get_current_project()
+    print(project_name)
 
 def download_project_files() -> None:
     project_name = get_current_project()
     download.download_project_files(project_name)
 
 def transcribe_project_files() -> None:
-    # project_name = get_current_project()
-    # transcribe.transcribe_project_files(project_name)
+    project_name = get_current_project()
+    transcribe.transcribe_project_files(project_name)
     # transcribe.transcribe_all_files()
     pass
 
@@ -69,6 +92,7 @@ def main():
         print("Usage: cab create <project-name> <book> <sources.txt>")
         print("Usage: cab use <project-name>")
         print("Usage: cab list")
+        print("Usage: cab project")
         print("Usage: cab download")
         print("Usage: cab transcribe")
         return
@@ -88,6 +112,8 @@ def main():
         transcribe_project_files()
     elif command == "list":
         list_projects()
+    elif command == "project":
+        list_current_project()
     elif command == "use":
         if len(sys.argv) != 3:
             print("Usage: cab use <project-name>")

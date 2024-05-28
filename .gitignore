@@ -4,11 +4,11 @@ node_modules
 *.mp4
 *.mov
 .env
-data/projects/**/*
-data/downloads/
-data/transcripts/*
+projects/**/*
+sources/
 sources.txt
 .current_project.txt
 sources/*
 __pycache__
 SA/__pycache__
+mess/

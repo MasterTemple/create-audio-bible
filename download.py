@@ -7,8 +7,9 @@ from pytube import YouTube
 from SA.SermonAudio import SermonAudioAPI
 import json
 from SA.Sermon import Sermon
+from functions import get_current_project
 
-from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, TRANSCRIPTS_DIR, DOWNLOADS_DIR, TEMP_DOWNLOADS_DIR
+from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR
 
 def download_project_files(project_name) -> None:
     with open(os.path.join(PROJECT_DIR, project_name, PROJECT_CONFIG_FILE_NAME), "r") as f:
@@ -35,15 +36,16 @@ def download_file(source):
         id = re.search(r"https://beta.sermonaudio.com/sermons/(\d+)", source)[1]
         download_sermon_audio_file(id)
     else:
-        id = re.search(r"(\d+)\.mp3$", source)[1]
+        id = re.search(r"([A-z0-9]+)\.mp3$", source)[1]
         print(f"Downloading Audio '{source}' [{id}]")
         download_from_url(source, id)
         # print(f"Invalid URL: {source}")
         # exit(1)
 
 def download_from_url(url, id):
+    project_name = get_current_project()
     response = requests.get(url, stream=True)
-    with open(os.path.join(DOWNLOADS_DIR, f"{id}.mp3"), 'wb') as fd:
+    with open(os.path.join(project_name, PROJECT_DOWNLOADS_DIR, f"{id}.mp3"), 'wb') as fd:
         for chunk in response.iter_content(chunk_size=1024):
             fd.write(chunk)
 
@@ -56,14 +58,15 @@ def download_sermon_audio_series(id):
     while keep_going:
         sa.params.setPage(page)
         sermons: list[Sermon] = sa.get_sermons()
-        print(sermons)
+        # print(sermons)
         all_sermons.extend(sermons)
         page += 1
         if len(sermons) == 0:
             break
-    print(all_sermons)
+    # print(all_sermons)
+    current_project = get_current_project()
     for sermon in all_sermons:
-        new_file = os.path.join(DOWNLOADS_DIR, f"{sermon.sermonID}.mp3")
+        new_file = os.path.join(PROJECT_DIR, current_project, PROJECT_DOWNLOADS_DIR, f"{sermon.sermonID}.mp3")
         if not os.path.exists(new_file):
             print(f"Downloading Sermon '{sermon.fullTitle}' [{sermon.sermonID}]")
             sermon.download_audio(new_file)
@@ -71,7 +74,8 @@ def download_sermon_audio_series(id):
 def download_sermon_audio_file(id):
     sa = SermonAudioAPI()
     sermon: Sermon = sa.get_sermon(id)
-    new_file = os.path.join(DOWNLOADS_DIR, f"{sermon.sermonID}.mp3")
+    current_project = get_current_project()
+    new_file = os.path.join(PROJECT_DIR, current_project, PROJECT_DOWNLOADS_DIR, f"{sermon.sermonID}.mp3")
     if not os.path.exists(new_file):
         print(f"Downloading Sermon '{sermon.fullTitle}' [{sermon.sermonID}]")
         sermon.download_audio(new_file)
@@ -79,19 +83,20 @@ def download_sermon_audio_file(id):
 def download_youtube_video_as_mp3(url):
     id = re.search("https://www.youtube.com/watch?v=([A-z0-9]+)", url)[1]
     print(f"Downloading YouTube Video '{url}'")
-    new_file = os.path.join(DOWNLOADS_DIR, f"{id}.mp3")
+    current_project = get_current_project()
+    new_file = os.path.join(PROJECT_DIR, current_project, PROJECT_DOWNLOADS_DIR, f"{id}.mp3")
     if os.path.exists(new_file):
         return
     yt = YouTube(url)
     audio = yt.streams.filter(only_audio=True).first()
-    out_file = audio.download(output_path=os.path.join(DOWNLOADS_DIR))
+    out_file = audio.download(output_path=os.path.join(PROJECT_DIR, current_project, PROJECT_DOWNLOADS_DIR))
     _, ext = os.path.splitext(out_file)
     if ext == ".mp3":
         new_file = id + '.mp3'
         os.rename(out_file, new_file)
     else:
         new_file = id + ext
-        os.rename(out_file, os.path.join(TEMP_DOWNLOADS_DIR, new_file))
+        os.rename(out_file, os.path.join(PROJECT_DIR, current_project, PROJECT_TEMP_DOWNLOADS_DIR))
         print("Downloaded a non .mp3 file!")
 
 def download_playlist(url):

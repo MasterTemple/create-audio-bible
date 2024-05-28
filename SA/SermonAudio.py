@@ -29,7 +29,7 @@ class SermonAudioAPI:
 
     def get_sermons(self) -> list[Sermon]:
         j: list[dict] = self.get("/sermons/")
-        print(j)
+        # print(j)
         j = j['results']
         sermons: list[Sermon] = list(map(lambda s: Sermon.from_dict(s), j))
         return sermons
