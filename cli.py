@@ -2,10 +2,11 @@ import os
 import json
 import sys
 import download
+from json_to_csv import create_data_csv, create_search_csv
 import transcribe
 
 from functions import get_current_project
-from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR
+from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_CSV_DIR
 
 
 def create_project(project_name, book, sources_file):
@@ -34,13 +35,14 @@ def create_project(project_name, book, sources_file):
     #     └── chapters/
     #         └── {book} {chapter}.mp3
     os.makedirs(new_project_dir)
+    os.makedirs(os.path.join(new_project_dir, PROJECT_DOWNLOADS_DIR))
+    os.makedirs(os.path.join(new_project_dir, PROJECT_TEMP_DOWNLOADS_DIR))
+    os.makedirs(os.path.join(new_project_dir, PROJECT_CSV_DIR))
+    os.makedirs(os.path.join(new_project_dir, PROJECT_TRANSCRIPTS_DIR))
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_AUDIO))
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_EXPORT))
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_EXPORT_VERSES))
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_EXPORT_CHAPTERS))
-    os.makedirs(os.path.join(new_project_dir, PROJECT_TRANSCRIPTS_DIR))
-    os.makedirs(os.path.join(new_project_dir, PROJECT_DOWNLOADS_DIR))
-    os.makedirs(os.path.join(new_project_dir, PROJECT_TEMP_DOWNLOADS_DIR))
 
     with open(sources_file, 'r') as f:
         sources = [s.strip() for s in f.read().splitlines()]
@@ -85,6 +87,9 @@ def transcribe_project_files() -> None:
     transcribe.transcribe_project_files(project_name)
     # transcribe.transcribe_all_files()
     pass
+def create_csvs() -> None:
+    create_data_csv()
+    create_search_csv()
 
 def main():
     if len(sys.argv) < 2:
@@ -95,6 +100,7 @@ def main():
         print("Usage: cab project")
         print("Usage: cab download")
         print("Usage: cab transcribe")
+        print("Usage: cab csv")
         return
 
     command = sys.argv[1]
@@ -110,6 +116,8 @@ def main():
         download_project_files()
     elif command == "transcribe":
         transcribe_project_files()
+    elif command == "csv":
+        create_csvs()
     elif command == "list":
         list_projects()
     elif command == "project":
