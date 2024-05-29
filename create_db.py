@@ -47,7 +47,7 @@ def create_data_csv():
             "value": id
         })
         # segment csv
-        segment_doc.extend(create_segment_csv(data))
+        segment_doc.extend(create_segment_csv(data, id))
 
     # write to csv
     sources.delete_many({})
@@ -64,8 +64,8 @@ def get_prev_end(l, i):
         i -= 1
     return l[i]['end']
 
-def create_segment_csv(data):
-    global source_id
+def create_segment_csv(data, source_id):
+    # global source_id
     global segment_id
     arr = []
     data = data['word_segments']
