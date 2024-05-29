@@ -35,7 +35,7 @@ def create_data_csv():
     for file in os.listdir(transcript_folder):
         if not file.endswith(".json"):
             continue
-        print(f'"{os.path.join(transcript_folder, file)}"')
+        # print(f'"{os.path.join(transcript_folder, file)}"')
         with open(os.path.join(transcript_folder, file), "r", encoding="utf-8") as f:
             data = json.load(f)
         id, _ = file.split(".")
@@ -78,6 +78,7 @@ def create_segment_csv(data):
     i = 1
     w = 0
     while w < len(data):
+        segment_id += 1
         seg = data[w]
         content = seg['word']
         if 'start' in seg:
@@ -90,7 +91,6 @@ def create_segment_csv(data):
         else:
             end = get_next_start(data, w)
             # end = data[w+1]['start']
-        i += 1
         arr.append({
             "id": segment_id,
             "source": source_id,
@@ -99,6 +99,7 @@ def create_segment_csv(data):
             "end": end,
             "sequence": i
         })
+        i += 1
         w += 1
     return arr
 
