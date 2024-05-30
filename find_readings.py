@@ -1,19 +1,48 @@
 import pandas as pd
+import os
 import re
 from dataclasses import dataclass
 import json
 from pymongo import MongoClient
 import sqlite3
+from functions import get_current_project
+from vars import CURRENT_PROJECT_FILE, DATA_DIR, JSON_READINGS_FILE, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_JSON_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_CSV_DIR, CSV_SEGMENTS_FILE, CSV_SOURCES_FILE, CSV_SEARCHES_FILE
 
 client = MongoClient('mongodb://localhost:27017/')
 db = client['ephtc']
-searches = db["searches"]
-segments = db["segments"]
-sources = db["sources"]
 
-bible_sqlite = "ESV.sqlite"
+searches = {s["word"]: s["segments"] for s in db["searches"].find({})}
+
+def search(word):
+    if word in searches:
+        return searches[word]
+    else:
+        return []
+
+segments = {s["id"]: s for s in db["segments"].find({})}
+
+def print_segment_range(s, e):
+    print(" ".join([segments[i]["content"] for i in range(s, e + 1)]))
+
+@dataclass
+class Reference:
+    book: str
+    chapter: int
+    verse: int
+    content: str
+
+@dataclass
+class Reading:
+    id: str
+    start_time: float
+    end_time: float
+    start_seg: int
+    end_seg: int
+
 book = "Ephesians"
 
+# get Bible verses
+bible_sqlite = "ESV.sqlite"
 with open("./references.json", "r") as f:
     references = json.load(f)
 
@@ -22,16 +51,9 @@ def get_esv_content(book: str, chapter: int, verse: int) -> str:
     cur = con.cursor()
     res = cur.execute(
         f"SELECT content FROM '{book}' WHERE chapter={chapter} AND verse={verse} ORDER BY verse ASC;")
-    verse = res.fetchone()
+    element = res.fetchone()
     # print(verse)
-    return verse[0]
-
-@dataclass
-class Reference:
-    book: str
-    chapter: int
-    verse: int
-    content: str
+    return element[0]
 
 def get_all_verses_and_content() -> list[Reference]:
     refs: list[Reference] = []
@@ -44,30 +66,73 @@ def get_all_verses_and_content() -> list[Reference]:
             refs.append(ref)
     return refs
 
+def find_readings(ref: Reference) -> list[Reading]:
+    words = [
+        word for word in
+            re.split(r"\s",
+                re.sub(r"[^A-z0-9\s\-]", "",
+                    ref.content.lower()
+                )#.replace("bondservant", "bond servant") # dont ask
+            )
+        if len(word) > 0
+    ]
+    word_count = len(words)
+    valid_offset = 4
+    accuracy = 0.6
+    readings: list[Reading] = []
+    for i, word in enumerate(words[:2]):
+        start_word = word
+        end_word = words[-1 - i]
+        start_segs = search(start_word)
+        end_segs = search(end_word)
+        # print(start_segs)
+        # print(end_segs)
+        # reading_segment_ranges = [(s, s + size) for s in start_segs if s + size in end_segs]
+        # segments_index = [(s, e) for s, e in zip(start_segs, end_segs) if (e - s < valid_offset) and (s > e)]
+        segments_index = [(s, e) for s in start_segs for e in end_segs if (s < e) and ((e - s - word_count - (2*i)) < valid_offset)]
+        # print(segments_index)
+        for s, e in segments_index:
+            valid_count = 0
+            # print(s, e + 1)
+            for j in range(s, e + 1):
+                # print(j - s, words[j - s])
+                if j - s >= word_count:
+                    continue
+                valid_count += 1 if segments[j]["content"] == words[j - s] else 0
+            rating = (valid_count) / (e - s)
+            # valid segment -> give reading
+            # print(rating)
+            if rating > accuracy:
+                readings.append(
+                    Reading(
+                        segments[s]["source"],
+                        segments[s]["start"],
+                        segments[e]["end"],
+                        s,
+                        e
+                    )
+                )
+        if len(readings) > 0:
+            break
+    return readings
+
+
 def main():
-    for ref in get_all_verses_and_content()[:1]:
-        # ref.
-        print(ref)
-        words = re.sub(r"[\.'\"!\?,\-\—:;…\ufffd\u00ed]", "", ref.content.lower()).split(" ")
-        size = len(words)
-        # words = ref.content.lower().split(" ")
-        start_word = words[0]
-        end_word = words[-1]
-        start = searches.find_one({
-            "word": start_word
-        })
-        end = searches.find_one({
-            "word": end_word
-        })
-        reading_start_segments = [s for s in start["segments"] if s + size in end["segments"]]
-        # print(readings)
-        readings = segments.find({
-            "id": {
-                "$in": reading_start_segments
-            }
-        })
-        for reading in readings:
-            print(reading)
+    data = {}
+    for ref in get_all_verses_and_content():
+        full_ref = f"{ref.book} {ref.chapter}:{ref.verse}"
+        # if full_ref != "Ephesians 6:6":
+        # if ref.chapter != 6:
+        #     continue
+        print(f"Finding '{full_ref}'", end = "")
+        data[full_ref] = [reading.__dict__ for reading in find_readings(ref)]
+        print(f" - {len(data[full_ref])} results")
+
+    project_name = get_current_project()
+    file = os.path.join(PROJECT_DIR, project_name, PROJECT_JSON_DIR, JSON_READINGS_FILE)
+    with open(file, "w") as f:
+        f.write(json.dumps(data, indent=2))
+
 
 if __name__ == "__main__":
     main()

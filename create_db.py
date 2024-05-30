@@ -140,7 +140,8 @@ def get_values(the_map, data):
 def create_search_db():
     the_map = {}
     for seg in segments.find({}):
-        word = re.sub(r"[\.'\"!\?,\-\—:;…\ufffd\u00ed]", "", seg['content'].lower())
+        # word = re.sub(r"[\.'\"!\?,\-\—:;…\ufffd\u00ed]", "", seg['content'].lower())
+        word = re.sub(r"[^A-z0-9\s\-]", "", seg['content'].lower())
         try:
             the_map[word].append(seg["id"])
         except:
