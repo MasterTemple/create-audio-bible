@@ -6,7 +6,7 @@ from json_to_csv import create_data_csv, create_search_csv
 import transcribe
 
 from functions import get_current_project
-from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_JSON_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_CSV_DIR
+from vars import AUDIO_TRIM_DIR, CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_JSON_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_CSV_DIR, PROJECT_DIR_AUDIO_TRIM
 
 
 def create_project(project_name, book, sources_file):
@@ -40,6 +40,7 @@ def create_project(project_name, book, sources_file):
     os.makedirs(os.path.join(new_project_dir, PROJECT_JSON_DIR))
     os.makedirs(os.path.join(new_project_dir, PROJECT_TRANSCRIPTS_DIR))
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_AUDIO))
+    os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_AUDIO_TRIM))
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_EXPORT))
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_EXPORT_VERSES))
     os.makedirs(os.path.join(new_project_dir, PROJECT_DIR_EXPORT_CHAPTERS))
