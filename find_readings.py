@@ -59,36 +59,15 @@ def main():
         end = searches.find_one({
             "word": end_word
         })
-        readings = [s for s in start["segments"] if s + size in end["segments"]]
-        print(readings)
-        res = segments.find_one({
-            "id": readings[0]
+        reading_start_segments = [s for s in start["segments"] if s + size in end["segments"]]
+        # print(readings)
+        readings = segments.find({
+            "id": {
+                "$in": reading_start_segments
+            }
         })
-        print(res)
-
-
-# word = "Paul"
-# query = {
-#     'content': word,
-#     'source': {
-#         '$in': [source['id'] for source in sources.find({}, {'id': 1})]
-#     }
-# }
-
-# Execute the query and join with sources collection
-# results = segments.aggregate([
-#     {'$match': query},
-#     {
-#         '$lookup': {
-#             'from': 'sources',
-#             'localField': 'source',
-#             'foreignField': 'id',
-#             'as': 'source_details'
-#         }
-#     }
-# ])
-# for res in results:
-#     print(res)
+        for reading in readings:
+            print(reading)
 
 if __name__ == "__main__":
     main()

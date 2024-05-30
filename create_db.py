@@ -8,7 +8,6 @@ from pymongo import MongoClient
 
 from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_CSV_DIR, CSV_SEGMENTS_FILE, CSV_SOURCES_FILE, CSV_SEARCHES_FILE
 
-source_id = 0
 segment_id = 0
 
 
@@ -19,14 +18,12 @@ segments = db["segments"]
 sources = db["sources"]
 
 def create_data_csv():
-    global source_id
     global segment_id
     global word_id
     project_name = get_current_project()
     transcript_folder = os.path.join(PROJECT_DIR, project_name, PROJECT_TRANSCRIPTS_DIR)
     csv_folder = os.path.join(PROJECT_DIR, project_name, PROJECT_CSV_DIR)
     # initialize
-    source_id = 0
     segment_id = 0
     source_doc = []
     segment_doc = []
@@ -39,19 +36,10 @@ def create_data_csv():
         with open(os.path.join(transcript_folder, file), "r", encoding="utf-8") as f:
             data = json.load(f)
         id, _ = file.split(".")
-        # source csv
-        source_id += 1
-        # id, value
-        source_doc.append({
-            "id": source_id,
-            "value": id
-        })
         # segment csv
         segment_doc.extend(create_segment_csv(data, id))
 
     # write to csv
-    sources.delete_many({})
-    sources.insert_many(source_doc)
     segments.delete_many({})
     segments.insert_many(segment_doc)
 
@@ -134,6 +122,7 @@ def create_search_csv():
     searches.delete_many({})
     searches.insert_many(search_doc)
 
+
 def get_values(the_map, data):
     global segment_id
     for segment in data['segments']:
@@ -148,9 +137,33 @@ def get_values(the_map, data):
         segment_id += 1
     return the_map
 
-create_data_csv()
-create_search_csv()
-print("Sources:", len([e for e in sources.find({})]))
-print("Segments:", len([e for e in segments.find({})]))
-print("Searches:", len([e for e in searches.find({})]))
+def create_search_db():
+    the_map = {}
+    for seg in segments.find({}):
+        word = re.sub(r"[\.'\"!\?,\-\—:;…\ufffd\u00ed]", "", seg['content'].lower())
+        try:
+            the_map[word].append(seg["id"])
+        except:
+            the_map[word] = [seg["id"]]
+
+    id = 1
+    search_doc = []
+    for k, v in the_map.items():
+        search_doc.append({
+            "id": id,
+            "word": k,
+            "segments": v,
+        })
+        id += 1
+    searches.delete_many({})
+    searches.insert_many(search_doc)
+
+# create_data_csv()
+create_search_db()
+print("Sources:", sources.count_documents({}))
+print("Segments:", segments.count_documents({}))
+print("Searches:", searches.count_documents({}))
+# print("Sources:", len([e for e in sources.find({})]))
+# print("Segments:", len([e for e in segments.find({})]))
+# print("Searches:", len([e for e in searches.find({})]))
 # print(len([e for e in sources.find({})]))
