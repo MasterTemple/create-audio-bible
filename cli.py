@@ -1,12 +1,15 @@
 import os
+import trim
 import json
 import sys
 import download
-from json_to_csv import create_data_csv, create_search_csv
+# from json_to_csv import create_data_csv, create_search_csv
 import transcribe
+import create_db
+import find_readings
 
 from functions import get_current_project
-from vars import AUDIO_TRIM_DIR, CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_JSON_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_CSV_DIR, PROJECT_DIR_AUDIO_TRIM
+from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_JSON_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_CSV_DIR, PROJECT_DIR_AUDIO_TRIM
 
 
 def create_project(project_name, book, sources_file):
@@ -88,9 +91,9 @@ def transcribe_project_files() -> None:
     transcribe.transcribe_project_files(project_name)
     # transcribe.transcribe_all_files()
     pass
-def create_csvs() -> None:
-    create_data_csv()
-    create_search_csv()
+def create_database() -> None:
+    create_db.load()
+
 
 def main():
     if len(sys.argv) < 2:
@@ -101,7 +104,9 @@ def main():
         print("Usage: cab project")
         print("Usage: cab download")
         print("Usage: cab transcribe")
-        print("Usage: cab csv")
+        print("Usage: cab db")
+        print("Usage: cab find")
+        print("Usage: cab trim")
         return
 
     command = sys.argv[1]
@@ -117,12 +122,16 @@ def main():
         download_project_files()
     elif command == "transcribe":
         transcribe_project_files()
-    elif command == "csv":
-        create_csvs()
+    elif command == "db":
+        create_database()
+    elif command == "find":
+        find_readings.find_all_readings()
     elif command == "list":
         list_projects()
     elif command == "project":
         list_current_project()
+    elif command == "trim":
+        trim.trim_all_findings()
     elif command == "use":
         if len(sys.argv) != 3:
             print("Usage: cab use <project-name>")

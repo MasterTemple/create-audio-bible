@@ -5,21 +5,18 @@ from dataclasses import dataclass
 import json
 from pymongo import MongoClient
 import sqlite3
-from functions import get_current_project
+from functions import get_current_project, get_db_name, get_project_config
 from vars import CURRENT_PROJECT_FILE, DATA_DIR, JSON_READINGS_FILE, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_JSON_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_CSV_DIR, CSV_SEGMENTS_FILE, CSV_SOURCES_FILE, CSV_SEARCHES_FILE
 
-client = MongoClient('mongodb://localhost:27017/')
-db = client['ephtc']
-
-searches = {s["word"]: s["segments"] for s in db["searches"].find({})}
+searches = {}
+segments = {}
 
 def search(word):
+    global searches
     if word in searches:
         return searches[word]
     else:
         return []
-
-segments = {s["id"]: s for s in db["segments"].find({})}
 
 def print_segment_range(s, e):
     print(" ".join([segments[i]["content"] for i in range(s, e + 1)]))
@@ -39,8 +36,6 @@ class Reading:
     start_seg: int
     end_seg: int
 
-book = "Ephesians"
-
 # get Bible verses
 bible_sqlite = "ESV.sqlite"
 with open("./references.json", "r") as f:
@@ -55,7 +50,7 @@ def get_esv_content(book: str, chapter: int, verse: int) -> str:
     # print(verse)
     return element[0]
 
-def get_all_verses_and_content() -> list[Reference]:
+def get_all_verses_and_content(book) -> list[Reference]:
     refs: list[Reference] = []
     for chapter, verses_in_chapter in enumerate(references[book]):
         if chapter == 0:
@@ -117,13 +112,22 @@ def find_readings(ref: Reference) -> list[Reading]:
     return readings
 
 
-def main():
+
+def find_all_readings():
+    global searches
+    global segments
+    client = MongoClient('mongodb://localhost:27017/')
+    db = client[get_db_name()]
+    config = get_project_config()
+
+    searches = {s["word"]: s["segments"] for s in db["searches"].find({})}
+    segments = {s["id"]: s for s in db["segments"].find({})}
+
     data = {}
-    for ref in get_all_verses_and_content():
+    book = config["book"]
+
+    for ref in get_all_verses_and_content(book):
         full_ref = f"{ref.book} {ref.chapter}:{ref.verse}"
-        # if full_ref != "Ephesians 6:6":
-        # if ref.chapter != 6:
-        #     continue
         print(f"Finding '{full_ref}'", end = "")
         data[full_ref] = [reading.__dict__ for reading in find_readings(ref)]
         print(f" - {len(data[full_ref])} results")
@@ -132,7 +136,3 @@ def main():
     file = os.path.join(PROJECT_DIR, project_name, PROJECT_JSON_DIR, JSON_READINGS_FILE)
     with open(file, "w") as f:
         f.write(json.dumps(data, indent=2))
-
-
-if __name__ == "__main__":
-    main()
