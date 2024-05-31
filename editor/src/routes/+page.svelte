@@ -35,13 +35,32 @@
 		return json;
 	}
 
+	// /**
+	//  * @param {PointerEvent} e - event of user clicking expandable/collapsible region
+	//  */
+	// function toggleChildren(e) {
+	// 	const button = e.target;
+	// 	button.classList.toggle('active');
+	// 	const content = button.nextElementSibling;
+	// 	if (content.style.display === 'block') {
+	// 		content.style.display = 'none';
+	// 	} else {
+	// 		content.style.display = 'block';
+	// 	}
+	// }
+
 	/**
-	 * @param {PointerEvent} e - event of user clicking expandable/collapsible region
+	 * @param {str} content -
 	 */
-	function toggleChildren(e) {
-		const button = e.target;
-		button.classList.toggle('active');
-		const content = button.nextElementSibling;
+	function asId(content) {
+		return content.replace(/[^A-z0-9]/g, '-') + '-content';
+	}
+
+	/**
+	 * @param {str} id -
+	 */
+	function toggleContent(id) {
+		const content = document.getElementById(asId(id));
 		if (content.style.display === 'block') {
 			content.style.display = 'none';
 		} else {
@@ -108,6 +127,8 @@
 		}
 		for (let [reference, readings] of Object.entries(json)) {
 			const chapter = reference.match(/.*(?=:)/g)[0];
+			// const chapterNumber = parseInt(reference.match(/\d+(?=:)/g)[0]);
+			// console.log({chapter, reference, chapterNumber, bool: chapterNumber > 2})
 			tree[chapter][reference] = readings.slice(0, 5);
 		}
 		bookTree.set(tree);
@@ -127,105 +148,70 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Ephesians</title>
-		<style>
-			body {
-				font-family: Arial, sans-serif;
-				margin: 20px;
-			}
-
-			.container {
-				max-width: 800px;
-				margin: 0 auto;
-				border: 1px solid #ccc;
-				padding: 10px;
-				border-radius: 5px;
-			}
-
-			.header {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-			}
-
-			.header h1 {
-				margin: 0;
-			}
-
-			.collapsible {
-				cursor: pointer;
-				padding: 10px;
-				border: none;
-				outline: none;
-				text-align: left;
-				width: 100%;
-				background-color: #f9f9f9;
-				border-bottom: 1px solid #ccc;
-			}
-
-			.collapsible:hover,
-			.collapsible.active {
-				background-color: #ddd;
-			}
-
-			.content {
-				padding: 0 15px;
-				display: none;
-				overflow: hidden;
-				border-left: 3px solid #ccc;
-				margin-bottom: 10px;
-			}
-
-			.content.active {
-				display: block;
-			}
-
-			.buttons {
-				margin-top: 10px;
-			}
-
-			.buttons button {
-				margin-right: 5px;
-			}
-
-			.source,
-			.timestamps,
-			.volume {
-				margin-right: 10px;
-			}
-		</style>
+		<title>{$config.book}</title>
 	</head>
 	<body>
 		<div class="container">
 			<div class="header">
-				<h1>Ephesians - Tim Conway</h1>
+				<h1>{$config.name}</h1>
 				<!-- make a drop-down to select export audio files in verses, chapters, or the whole book -->
 				<button>Export</button>
 			</div>
+			<div class="main-content">
+
 			{#each Object.entries($bookTree) as [chapter, referencesToReadings]}
-				<button class="collapsible" on:click={toggleChildren}>{chapter}</button>
-				<div class="content">
+				<button class="collapsible" on:click={() => toggleContent(chapter)}>
+					<h2>{chapter}</h2>
+				</button>
+				<div id={asId(chapter)} class="content">
 					{#each Object.entries(referencesToReadings).sort((a, b) => a[0].match(/\d+$/g)[0] - b[0].match(/\d+$/g)[0]) as [reference, readings]}
-						<button class="collapsible" on:click={toggleChildren}>
-							<p>{reference}</p>
+						<button class="collapsible button-content" on:click={() => toggleContent(reference)}>
+							<h3>{reference}</h3>
 							{#await getReference(reference) then content}
-								<p>{content}</p>
+								<p class="esv">{content}</p>
 							{/await}
 						</button>
 
-						<div class="content">
+						<div id={asId(reference)} class="content">
 							{#each readings as reading, i}
-								<button class="collapsible" on:click={toggleChildren}>Reading {i + 1}</button>
-								<div class="content">
-									<p>{reading.content || 'The verse content...'}</p>
-									<div class="source">Source: {reading.id}.mp3</div>
-									<div class="timestamps">Start: {reading.start_time} End: {reading.end_time}</div>
-									<div class="volume">Volume: 1x</div>
-									<div class="buttons">
-										<button on:click={() => openFile(reading.id)}>Open File</button>
-										<button on:click={() => deleteReading(reading.id)}>Delete</button>
-										<button on:click={() => editReading(reading.id)}>Edit</button>
-										<button on:click={() => useReading(reading.id)}>Use</button>
+								<button class="collapsible button-content" on:click={toggleContent(`${reference} ${i}`)}>
+									<h4>Reading {i + 1}</h4>
+									<p>{reading.content || 'No audio content...'}</p>
+								</button>
+								<div id={asId(`${reference} ${i}`)} class="content">
+									<div class="top-row row">
+										<audio
+											preload="none"
+											id="audio"
+											controls
+										>
+											<source
+												src={`${domain}/audio?file_id=${reading.id}&start_time=${reading.start_time}&end_time=${reading.end_time}&volume=${reading?.volume || 1.0}`}
+												type="audio/mpeg"
+											/>
+										</audio>
+											<div class="start_time">
+												Start:
+												<input type="text" value={reading.start_time}>
+											</div>
+											<div class="end_time">
+												End:
+												<input type="text" value={reading.end_time}>
+											</div>
+											<div class="volume">
+												Volume:
+												<input type="text" value={reading?.volume || 1}>
+											</div>
+									</div>
+									<div class="bottom-row row">
+										<div class="source">
+												Source: 
+												<input type="text" value={`${reading.id}.mp3`} disabled>
+											</div>
+										<button class="open-button" on:click={() => openFile(reading.id)}>Open File</button>
+										<button class="delete-button" on:click={() => deleteReading(reading.id)}>Delete</button>
+										<button class="edit-button" on:click={() => editReading(reading.id)}>Edit</button>
+										<button class="use-button" on:click={() => useReading(reading.id)}>Use</button>
 									</div>
 								</div>
 							{/each}
@@ -233,6 +219,178 @@
 					{/each}
 				</div>
 			{/each}
+			</div>
 		</div>
 	</body>
 </html>
+
+<style>
+	body {
+		font-family: Arial, sans-serif;
+		margin: 20px;
+	}
+
+	.container {
+		max-width: 80vw;
+		margin: 0 auto;
+		border: 2px solid #ccc;
+		padding: 10px;
+		border-radius: 12px;
+	}
+
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.header h1 {
+		margin: 0;
+	}
+
+	.collapsible {
+		cursor: pointer;
+		padding: 10px;
+		border: none;
+		outline: none;
+		text-align: left;
+		width: 100%;
+		background-color: #f9f9f9;
+		border-bottom: 1px solid #ccc;
+		border-radius: 12px;
+	}
+
+	.collapsible:hover,
+	.collapsible.active {
+		background-color: #ddd;
+	}
+
+	.main-content,
+	.content {
+		padding: 0 15px;
+		overflow: hidden;
+		border-left: 3px solid #ccc;
+		border-radius: 12px;
+		margin-bottom: 10px;
+	}
+	.content {
+		display: none;
+	}
+
+	.content.active {
+		display: block;
+	}
+
+	/* .buttons { */
+	/* 	margin-top: 10px; */
+	/* } */
+	/**/
+	/* .buttons button { */
+	/* 	margin-right: 5px; */
+	/* } */
+
+	.source,
+	.timestamps,
+	.volume {
+		margin-right: 10px;
+	}
+
+	.button-content {
+		display: flex;
+		align-items: center;
+		text-align: center;
+	}
+
+	.button-content > h3,
+	.button-content > h4 {
+		margin-right: 2rem;
+	}
+
+	.esv {
+	}
+
+	.row {
+		display: flex;
+	}
+
+	.col {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.top-row,
+	.bottom-row {
+		align-items: center;
+		padding-top: 1rem;
+		padding-bottom: 1rem;
+	}
+
+	.top-row > div,
+	.top-row > div > input,
+	.bottom-row > div > input {
+		padding: 1ch;
+		text-align: center;
+		align-content: center;
+		font-size: 1rem;
+	}
+
+	.top-row > div {
+	}
+
+	.top-row > div > input {
+		border-radius: 8px;
+		border: 1px solid black;
+		width: 7ch;
+	}
+
+	.bottom-row > div > input {
+		border-radius: 8px;
+		border: 1px solid black;
+		width: 18ch;
+		text-align: center;
+		align-content: center;
+		background: #e9ecef;
+	}
+
+	.bottom-row > button {
+		padding: 0.5rem;
+		font-size: 1rem;
+		margin-left: 1rem;
+		width: 12ch;
+		border-radius: 8px;
+	}
+
+	.open-button {
+		background: #ffec99;
+	}
+
+	.delete-button {
+		background: #ffc9c9;
+	}
+
+	.edit-button {
+		background: #a5d8ff;
+	}
+
+	.use-button {
+		background: #b2f2bb;
+	}
+
+	.open-button:hover {
+		background: #ffd43b;
+	}
+
+	.delete-button:hover {
+		background: #ff8787;
+	}
+
+	.edit-button:hover {
+		background: #4dabf7;
+	}
+
+	.use-button:hover {
+		background: #69db7c;
+	}
+
+
+</style>

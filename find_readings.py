@@ -35,6 +35,7 @@ class Reading:
     end_time: float
     start_seg: int
     end_seg: int
+    content: str
 
 # get Bible verses
 bible_sqlite = "ESV.sqlite"
@@ -97,15 +98,19 @@ def find_readings(ref: Reference) -> list[Reading]:
             # valid segment -> give reading
             # print(rating)
             if rating > accuracy:
+                content = " ".join([segments[i]["content"] for i in range(s, e + 1)])
                 readings.append(
                     Reading(
                         segments[s]["source"],
                         segments[s]["start"],
                         segments[e]["end"],
                         s,
-                        e
+                        e,
+                        content
                     )
                 )
+            if len(readings) == 5:
+                break
         if len(readings) > 0:
             break
     return readings

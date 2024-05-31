@@ -20,6 +20,13 @@ from functions import get_project_config, get_db_name, get_current_project
 from find_readings import get_esv_content
 from trim import trim_file
 from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_JSON_DIR
+from pymongo import MongoClient
+
+
+# client = MongoClient('mongodb://localhost:27017/')
+# db = client[get_db_name()]
+# searches = {s["word"]: s["segments"] for s in db["searches"].find({})}
+# segments = {s["id"]: s for s in db["segments"].find({})}
 
 path = "ESV.sqlite"
 
@@ -86,7 +93,7 @@ def readings():
         data = json.load(f)
     return reply(data)
 
-@app.route('/audio', methods=['POST'])
+@app.route('/audio', methods=['GET'])
 def audio():
     """
     Description:
@@ -99,13 +106,13 @@ def audio():
         file.mp3
     """
     project_name = get_current_project()
-    data = request.json
+
     output_path = trim_file(
         project_name,
-        data["file_id"],
-        data["start_time"],
-        data["end_time"],
-        data["volume"]
+        request.args.get("file_id"),
+        request.args.get("start_time"),
+        request.args.get("end_time"),
+        request.args.get("volume") or 1
     )
     with open(output_path, "rb") as f:
         return f.read()
