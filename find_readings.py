@@ -47,7 +47,6 @@ def get_esv_content(book: str, chapter: int, verse: int) -> str:
     res = cur.execute(
         f"SELECT content FROM '{book}' WHERE chapter={chapter} AND verse={verse} ORDER BY verse ASC;")
     element = res.fetchone()
-    # print(verse)
     return element[0]
 
 def get_all_verses_and_content(book) -> list[Reference]:

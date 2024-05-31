@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ephesians</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+        }
+
+        .collapsible {
+            cursor: pointer;
+            padding: 10px;
+            border: none;
+            outline: none;
+            text-align: left;
+            width: 100%;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .collapsible:hover, .collapsible.active {
+            background-color: #ddd;
+        }
+
+        .content {
+            padding: 0 15px;
+            display: none;
+            overflow: hidden;
+            border-left: 3px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        .buttons {
+            margin-top: 10px;
+        }
+
+        .buttons button {
+            margin-right: 5px;
+        }
+
+        .source, .timestamps, .volume {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Ephesians - Tim Conway</h1>
+            <button>Export</button>
+        </div>
+        <button class="collapsible">Ephesians 1</button>
+        <div class="content">
+            <button class="collapsible">Ephesians 1:1</button>
+            <div class="content">
+                <button class="collapsible">Reading 1</button>
+                <div class="content">
+                    <p>Words</p>
+                    <div class="source">Source: 123456</div>
+                    <div class="timestamps">Start: 123.4 End: 132.4</div>
+                    <div class="volume">Volume: 1x</div>
+                    <div class="buttons">
+                        <button>Open File</button>
+                        <button>Hide</button>
+                        <button>Edit</button>
+                        <button>Use</button>
+                    </div>
+                </div>
+                <button class="collapsible">Reading 2</button>
+                <div class="content">
+                    <p>Words</p>
+                </div>
+            </div>
+        </div>
+        <button class="collapsible">Ephesians 2</button>
+        <div class="content">
+            <button class="collapsible">Ephesians 2:1</button>
+            <div class="content">
+                <!-- Nested content goes here -->
+            </div>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll('.collapsible').forEach(button => {
+            button.addEventListener('click', () => {
+                button.classList.toggle('active');
+                const content = button.nextElementSibling;
+                if (content.style.display === 'block') {
+                    content.style.display = 'none';
+                } else {
+                    content.style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

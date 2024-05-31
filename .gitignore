@@ -13,3 +13,5 @@ __pycache__
 SA/__pycache__
 mess/
 *.zip
+editor/node_modules/
+editor/.svelte-kit/
