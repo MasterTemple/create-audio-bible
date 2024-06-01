@@ -181,6 +181,7 @@
 	 * @param {Object} reading
 	 */
 	function audioUrl(reading) {
+		// reading.autoplay = true;
 		return `${domain}/audio?file_id=${reading.id}&start_time=${reading.start_time}&end_time=${reading.end_time}&volume=${reading?.volume || 1.0}`;
 	}
 
@@ -192,7 +193,9 @@
 	function editReading(reading) {
 		console.log({ reading });
 		reading.audio.preload = 'auto';
+		reading.audio.autoplay = true;
 		reading.audio.load();
+		// reading.audio.load();
 		saveBookTree();
 	}
 
@@ -338,7 +341,17 @@
 		// get reading info
 		await setBookTree();
 
+		// when a new reading is opened
 		openReading.subscribe((r) => {
+			// stop all other audios/previous audio
+
+			// play audio of reading
+			const audio = document.querySelector(`#audio-${r}`);
+			// restart audio from beginning
+			const autoPlay = true;
+			if(audio && autoPlay)
+				audio.play()
+			// scroll to new reading
 			scrollIntoMiddle(r);
 		});
 	});
@@ -412,7 +425,7 @@
 											style="display:{$openReading == reading.sid ? 'block' : 'none'};"
 										>
 											<div class="top-row row">
-												<audio preload="none" bind:this={reading.audio} controls>
+												<audio id={'audio-' + reading.sid} preload="none" bind:this={reading.audio} controls>
 													<!-- <source src={audioUrl(reading)} type="audio/mpeg" /> -->
 													<source src={reading.url} type="audio/mpeg" />
 												</audio>

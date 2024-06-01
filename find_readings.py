@@ -93,7 +93,7 @@ def find_readings(ref: Reference) -> list[Reading]:
         # print(end_segs)
         # reading_segment_ranges = [(s, s + size) for s in start_segs if s + size in end_segs]
         # segments_index = [(s, e) for s, e in zip(start_segs, end_segs) if (e - s < valid_offset) and (s > e)]
-        segments_index = [(s, e) for s in start_segs for e in end_segs if (s < e) and ((e - s - word_count - (2*i)) < valid_offset)]
+        segments_index = [(s, e) for s in start_segs for e in end_segs if (s < e) and (abs(e - s - word_count - (2*i)) < valid_offset)]
         # print(segments_index)
         for s, e in segments_index:
             valid_count = 0
