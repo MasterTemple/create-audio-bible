@@ -482,13 +482,18 @@
 					<!-- 	<button on:click={() => exportPrompt('chapters')}>Export Chapters</button> -->
 					<!-- 	<button on:click={() => exportPrompt('book')}>Export Book</button> -->
 					<!-- </div> -->
-					<div class="row chapter-select-row">
-						{#each Object.keys($bookTree) as chapter}
-							<button
-								class:chapter-selected={$openChapter == chapter}
-								class="chapter-select"
-								on:click={() => openChapter.set(chapter)}>{chapter.match(/\d+$/g)[0]}</button
-							>
+					<div class="col chapter-select-row">
+						{#each as2DArray(Object.keys($bookTree)) as chapterRow}
+							<div class="row">
+								{#each chapterRow as chapter}
+									<button
+										class:chapter-selected={$openChapter == chapter}
+										class="chapter-select"
+										on:click={() => openChapter.set(chapter)}
+										>{chapter.match(/\d+$/g)[0]}
+									</button>
+								{/each}
+							</div>
 						{/each}
 					</div>
 					<div class="col verse-select-row">
@@ -901,7 +906,8 @@
 	.reading-select-row > div.row,
 	.verse-select-row,
 	.verse-select-row > div.row,
-	.chapter-select-row {
+	.chapter-select-row,
+	.chapter-select-row > div.row {
 		margin-top: 0.25rem;
 		margin-bottom: 0.25rem;
 	}
