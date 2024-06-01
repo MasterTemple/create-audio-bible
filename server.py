@@ -9,17 +9,18 @@ Endpoints:
     POST: /save(book_tree) -> None
 """
 
+import zipfile
 import re
 from functools import lru_cache
 import os
 import sqlite3
 from textwrap import indent
-from flask import Flask, Response, request, send_file, jsonify
+from flask import Flask, Response, request, send_file, jsonify, abort
 import subprocess
 from io import BytesIO
 from flask_cors import CORS
 import json
-from functions import get_project_config, get_db_name, get_current_project
+from functions import add_album_art, get_project_config, get_db_name, get_current_project
 from find_readings import get_esv_book, get_esv_content
 from trim import trim_file
 from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_DIR_EXPORT, PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED, PROJECT_DOWNLOADS_DIR, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS
@@ -191,27 +192,95 @@ class Reading:
     volume: float
     ref: Reference
 
-def create_verse_audio_file(config: dict[str,str], reading: Reading, track_number: int, bitrate: int=192) -> str:
-    project_name = config["name"]
+def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: int, overwrite=True, bitrate: int=192) -> str:
+    project_name = cfg["name"]
     ref = reading.ref
     input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DOWNLOADS_DIR, f'{reading.id}.mp3')
-    output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{ref.fmt_verse} - {config["author"]}.mp3')
+    output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{ref.fmt_verse} - {cfg["author"]}.mp3')
+    if os.path.exists(output_file) and not overwrite:
+        return output_file
+
 
     metadata_tags = [
         '-metadata', f'title={ref.fmt_verse}',
         '-metadata', f'track={track_number}',
-        '-metadata', f'album={config["book"]} - Verses',
-        '-metadata', f'artist={config["author"]}'
+        '-metadata', f'album={cfg["book"]} - Verses',
+        '-metadata', f'artist={cfg["author"]}'
     ]
 
-    if not os.path.exists(output_file):
-        command = ['ffmpeg', '-loglevel', 'error', '-i', input_file, '-ss', str(reading.start_time), '-to', str(reading.end_time), '-af', f'volume={reading.volume}', *metadata_tags, '-b:a', f'{bitrate}k', '-c:a', 'libmp3lame', output_file, "-y"]
+    cover_image = os.path.join(os.path.abspath("."), cfg["cover_image"])
+    print(cover_image)
+    image_tags = [
+        '-i', cover_image,
+        '-map', '0:0',  # Map input audio stream
+        '-map', '1:0',  # Map input cover image
+        '-c', 'copy',
+        '-metadata:s:v', 'title="Album cover"',
+        '-metadata:s:v', 'comment="Cover (Front)"',
+        '-metadata:s:v', 'mimetype=image/jpeg',
+        '-metadata:s:v', f'cover={cover_image}',
+        '-id3v2_version', '3',
+    ]
 
-        # cmd = ['ffmpeg', '-loglevel', 'error', '-i', mp3_path, '-ss', start_time, '-to', end_time, '-af', f'volume={volume_level}', *metadata_tags, '-c:a', 'libmp3lame', output_path, '-y']
-        subprocess.run(command)
+    command = [
+        'ffmpeg', '-loglevel', 'error',
+        '-i', input_file,  # Input audio file
+        '-ss', str(reading.start_time),
+        '-to', str(reading.end_time),
+        '-af', f'volume={reading.volume}',  # Audio filter
+        # *image_tags,  # Image tags
+        *metadata_tags,  # Metadata tags
+        '-b:a', f'{bitrate}k',  # Audio bitrate
+        '-c:a', 'libmp3lame',  # Audio codec
+        output_file,  # Output file
+        '-y'
+    ]
+
+    subprocess.run(command)
     return output_file
-    # with open(output_file, "rb") as f:
-    #     return f.read()
+
+def create_chapter_audio_file(cfg: dict[str,str], files_to_join: list[str], reading: Reading, overwrite:bool = True, bitrate: int=192) -> str:
+    project_name = cfg["name"]
+    ref = reading.ref
+    output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_CHAPTERS, f'{ref.fmt_chapter} - {cfg["author"]}.mp3')
+    if os.path.exists(output_file) and not overwrite:
+        return output_file
+
+    with open('list.txt', 'w') as f:
+        for file in files_to_join:
+            f.write(f"file '{file}'\n")
+
+    metadata_tags = [
+        '-metadata', f'title={ref.fmt_chapter}',
+        '-metadata', f'track={ref.chapter}',
+        '-metadata', f'album={cfg["book"]} - Chapters',
+        '-metadata', f'artist={cfg["author"]}'
+    ]
+
+    subprocess.run(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c', 'copy', *metadata_tags, '-b:a', f'{bitrate}k', '-c:a', 'libmp3lame', output_file, '-y'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # add_album_art(output_file)
+    os.remove('list.txt')
+
+
+def create_book_audio_file(cfg: dict[str,str], files_to_join: list[str], reading: Reading, overwrite:bool = True, bitrate: int=192) -> str:
+    project_name = cfg["name"]
+    ref = reading.ref
+    output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT, f'{ref.book} - {cfg["author"]}.mp3')
+
+    with open('list.txt', 'w') as f:
+        for file in files_to_join:
+            f.write(f"file '{file}'\n")
+
+    metadata_tags = [
+        '-metadata', f'title={ref.book}',
+        '-metadata', f'track={ref.chapter}',
+        '-metadata', f'album={cfg["book"]} - Chapters',
+        '-metadata', f'artist={cfg["author"]}'
+    ]
+
+    subprocess.run(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c', 'copy', *metadata_tags, '-b:a', f'{bitrate}k', '-c:a', 'libmp3lame', output_file, '-y'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # add_album_art(output_file)
+    os.remove('list.txt')
 
 @app.route('/export', methods=['POST'])
 def export():
@@ -220,7 +289,7 @@ def export():
     Parameters:
     (book_tree) -> .mp3 | .zip
     """
-    config = get_project_config()
+    cfg = get_project_config()
     project_name = get_current_project()
     # pro move, create symbolic link from selected .mp3 to exported new .mp3 (though modify the image if necessary)
 
@@ -253,18 +322,67 @@ def export():
 
     track_number = 1
 
-    def get_chapter_and_verse(s):
-        l = list(map( lambda i: int(i), re.findall(r'\d+', s)[:-1][-2:]))
-        return l
-
     # sort mp3 files by chapter and verse
-    reading_list_sorted = sorted(reading_list, key= lambda r: [r.ref.chapter, r.ref.verse])
+    reading_list_sorted: list[Reading] = sorted(reading_list, key= lambda r: [r.ref.chapter, r.ref.verse])
 
     for reading in reading_list_sorted:
-        create_verse_audio_file(config, reading, track_number)
+        create_verse_audio_file(cfg, reading, track_number, False)
         track_number += 1
-        break
-    return reply({})
+
+    if export_type == "chapters" or export_type == "book":
+        chapter_count = max([r.ref.chapter for r in reading_list_sorted])
+        chapter_map = {}
+        for i in range(1, chapter_count + 1):
+            chapter_map[i] = []
+        for reading in reading_list_sorted:
+            chapter_map[reading.ref.chapter].append(reading)
+        for chapter, readings in chapter_map.items():
+            pass
+            files_to_join = []
+            for reading in readings:
+                output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{reading.ref.fmt_verse} - {cfg["author"]}.mp3')
+                files_to_join.append(output_file)
+            create_chapter_audio_file(cfg, files_to_join, readings[0], False)
+
+    if export_type == "book":
+        chapter_count = max([r.ref.chapter for r in reading_list_sorted])
+        files_to_join = []
+        reading = reading_list_sorted[0]
+        for i in range(1, chapter_count + 1):
+            output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_CHAPTERS, f'{reading.ref.fmt_chapter} - {cfg["author"]}.mp3')
+            files_to_join.append(output_file)
+        create_book_audio_file(cfg, files_to_join, reading, False)
+
+    zip_name = project_name
+    # verses
+    if export_type == "verses":
+        filenames = [os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{reading.ref.fmt_verse} - {cfg["author"]}.mp3') for reading in reading_list_sorted]
+        zip_name = f"{cfg['book']} Reading - Verses"
+    elif export_type == "chapters":
+        filenames = [os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_CHAPTERS, f'{reading.ref.fmt_chapter} - {cfg["author"]}.mp3') for reading in reading_list_sorted]
+        zip_name = f"{cfg['book']} Reading - Chapters"
+    else:
+        filenames = [os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT, f'{reading.ref.book} - {cfg["author"]}.mp3') for reading in reading_list_sorted]
+        zip_name = f"{cfg['book']} Reading"
+
+    # zip_buffer = BytesIO()
+    #
+    # with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+    #     for filename in filenames:
+    #         if os.path.isfile(filename):
+    #             zip_file.write(filename, os.path.basename(filename))
+    #         else:
+    #             abort(400, f"File {filename} does not exist")
+    #
+    # # Seek to the beginning of the BytesIO buffer
+    # zip_buffer.seek(0)
+    #
+    # return send_file(
+    #     zip_buffer,
+    #     mimetype='application/zip',
+    #     as_attachment=True,
+    #     download_name=f'{zip_name}.zip',
+    # )
 
 @app.route('/save', methods=['POST'])
 def save():
