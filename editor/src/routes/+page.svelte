@@ -31,7 +31,7 @@
 	 */
 	async function scrollIntoMiddle(id) {
 		const element = document.getElementById(id);
-		console.log({ id, element });
+		// console.log({ id, element });
 		if (element != null) {
 			// centerElement(element)
 			// document.querySelector("div.main-content").scrollTop += 150
@@ -131,17 +131,17 @@
 		return content.replace(/[^A-z0-9]/g, '-') + '-content';
 	}
 
-	/**
-	 * @param {str} id -
-	 */
-	function toggleContent(id) {
-		const content = document.getElementById(asId(id));
-		if (content.style.display === 'block') {
-			content.style.display = 'none';
-		} else {
-			content.style.display = 'block';
-		}
-	}
+	// /**
+	//  * @param {str} id -
+	//  */
+	// function toggleContent(id) {
+	// 	const content = document.getElementById(asId(id));
+	// 	if (content.style.display === 'block') {
+	// 		content.style.display = 'none';
+	// 	} else {
+	// 		content.style.display = 'block';
+	// 	}
+	// }
 
 	/**
 	 * @param {string} id - file id
@@ -191,7 +191,7 @@
 	 * @param {Object} reading
 	 */
 	function editReading(reading) {
-		console.log({ reading });
+		// console.log({ reading });
 		reading.audio.preload = 'auto';
 		reading.audio.autoplay = true;
 		reading.audio.load();
@@ -329,6 +329,32 @@
 			}
 		}
 		bookTree.set(tree);
+		console.log({$bookTree})
+	}
+
+	/**
+	* @param {Array<string>} arr 
+	* @returns {Array<Array<string>>}
+	*/
+	function as2DArray(arr, maxRowLength = 20) {
+		let rowCount = Math.floor(arr.length/maxRowLength);
+		if (arr.length > (maxRowLength * rowCount)) {
+			rowCount++;
+		}
+		maxRowLength = Math.round(arr.length / rowCount);
+		const result = [];
+		let temp = [];
+		for (let i = 0; i < arr.length; i++) {
+			if (temp.length === maxRowLength) {
+				result.push(temp);
+				temp = [];
+			}
+			temp.push(arr[i]);
+		}
+		if (temp.length > 0) {
+			result.push(temp);
+		}
+		return result;
 	}
 
 	onMount(async () => {
@@ -378,6 +404,22 @@
 						<button on:click={() => exportPrompt('chapters')}>Export Chapters</button>
 						<button on:click={() => exportPrompt('book')}>Export Book</button>
 					</div>
+					<div class="row chapter-select-row">
+						{#each Object.keys($bookTree) as chapter}
+								<button class:chapter-selected={$openChapter == chapter} class="chapter-select" on:click={() => openChapter.set(chapter)}>{chapter.match(/\d+$/g)[0]}</button>
+						{/each}
+					</div>
+					<div class="col verse-select-row">
+						{#if $openChapter != ""}
+							{#each as2DArray(Object.keys($bookTree[$openChapter]).sort((a, b) => a.match(/\d+$/g)[0] - b.match(/\d+$/g)[0])) as referenceRow}
+								<div class="row">
+									{#each referenceRow as reference}
+										<button class:verse-selected={$openReference == reference} class="verse-select" on:click={() => openReference.set(reference)}>{reference.match(/\d+$/g)[0]}</button>
+									{/each}
+								</div>
+							{/each}
+						{/if}
+					</div>
 				</div>
 			</div>
 			<div class="main-content">
@@ -399,7 +441,10 @@
 									class="collapsible button-content verse"
 									on:click={() => openReference.set($openReference != reference ? reference : '')}
 								>
-									<h3>{reference}</h3>
+									<div class="col">
+										<h3>{reference}</h3>
+										<p class="verse-results">Readings: {readings?.length || 0}</p>
+									</div>
 									<!-- {#await getReference(reference) then content} -->
 									<!-- 	<p class="esv">{content}</p> -->
 									<!-- {/await} -->
@@ -662,9 +707,22 @@
 		text-align: center;
 	}
 
-	.button-content > h3,
+	.button-content > div > h3,
 	.button-content > h4 {
 		margin-right: 2rem;
+	}
+
+	.button-content.verse > div.col > h3,
+	.button-content.verse > div.col > h4,
+	.button-content.verse > div.col > p {
+		margin-top: 0;
+		margin-bottom: 0;
+	}
+
+	.verse-results {
+		margin-left: 2ch;
+		text-align: left;
+		color: var(--dark4);
 	}
 
 	.esv {
@@ -725,6 +783,19 @@
 		border-radius: 8px;
 	}
 
+	.verse-select-row,
+	.verse-select-row > div.row,
+	.chapter-select-row {
+		margin-top: 0.5rem;
+		margin-bottom: 0.5rem;
+	}
+	
+	button.chapter-select,
+	button.verse-select {
+		width: 4ch;
+		padding: 0.25rem;
+	}
+
 	input:hover,
 	input:focus,
 	button:hover {
@@ -773,6 +844,9 @@
 	input[type='number'] {
 		-moz-appearance: textfield;
 	}
+
+	.verse-selected,
+	.chapter-selected,
 	.selected-reading {
 		background-color: var(--pg);
 	}

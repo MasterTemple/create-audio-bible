@@ -12,7 +12,7 @@ from functions import get_current_project
 from vars import CURRENT_PROJECT_FILE, DATA_DIR, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS, PROJECT_CONFIG_FILE_NAME, PROJECT_DOWNLOADS_DIR, PROJECT_JSON_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_TRANSCRIPTS_DIR, PROJECT_DOWNLOADS_DIR, PROJECT_TEMP_DOWNLOADS_DIR, PROJECT_CSV_DIR, PROJECT_DIR_AUDIO_TRIM
 
 
-def create_project(project_name, book, sources_file):
+def create_project(project_name, book, author, sources_file, cover_image=""):
     new_project_dir = os.path.join(os.getcwd(), PROJECT_DIR, project_name)
     if os.path.exists(new_project_dir):
         print(f"Error: Project '{project_name}' already exists.")
@@ -55,9 +55,10 @@ def create_project(project_name, book, sources_file):
         f.write(json.dumps({
             "name": project_name,
             "book": book,
-            "cover_image": "/path/to/img", # I'll deal with this later
+            "author": author,
+            "cover_image": cover_image, # I'll deal with this later
             "sources": sources
-        }))
+        }, indent=2))
 
     print(f"Project '{project_name}' created successfully.")
 
@@ -111,13 +112,17 @@ def main():
 
     command = sys.argv[1]
     if command == "create":
-        if len(sys.argv) != 5:
-            print("Usage: cab create <project-name> <book> <sources.txt>")
+        if len(sys.argv) < 5 or len(sys.argv) > 6:
+            print("Usage: cab create <book> <author> <sources.txt> <cover_image.jpg|png>")
             return
-        project_name = sys.argv[2]
-        book = sys.argv[3]
+        book = sys.argv[2]
+        author = sys.argv[3]
+        project_name = f"{book} - {author}"
         sources_file = sys.argv[4]
-        create_project(project_name, book, sources_file)
+        cover_image = ""
+        if len(sys.argv) == 6:
+            cover_image = sys.argv[5]
+        create_project(project_name, book, author, sources_file, cover_image)
     elif command == "download":
         download_project_files()
     elif command == "transcribe":
