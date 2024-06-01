@@ -397,13 +397,13 @@
 				<div class="center col">
 					<h1>{$config?.name}</h1>
 					<!-- chapter list? -->
-					<div class="row">
-						<!-- make a drop-down to select export audio files in verses, chapters, or the whole book -->
-						<button id="save-button" on:click={saveBookTree}>Save</button>
-						<button on:click={() => exportPrompt('verses')}>Export Verses</button>
-						<button on:click={() => exportPrompt('chapters')}>Export Chapters</button>
-						<button on:click={() => exportPrompt('book')}>Export Book</button>
-					</div>
+					<!-- <div class="row"> -->
+					<!-- make a drop-down to select export audio files in verses, chapters, or the whole book -->
+					<!-- 	<button id="save-button" on:click={saveBookTree}>Save</button> -->
+					<!-- 	<button on:click={() => exportPrompt('verses')}>Export Verses</button> -->
+					<!-- 	<button on:click={() => exportPrompt('chapters')}>Export Chapters</button> -->
+					<!-- 	<button on:click={() => exportPrompt('book')}>Export Book</button> -->
+					<!-- </div> -->
 					<div class="row chapter-select-row">
 						{#each Object.keys($bookTree) as chapter}
 								<button class:chapter-selected={$openChapter == chapter} class="chapter-select" on:click={() => openChapter.set(chapter)}>{chapter.match(/\d+$/g)[0]}</button>
@@ -411,10 +411,10 @@
 					</div>
 					<div class="col verse-select-row">
 						{#if $openChapter != ""}
-							{#each as2DArray(Object.keys($bookTree[$openChapter]).sort((a, b) => a.match(/\d+$/g)[0] - b.match(/\d+$/g)[0])) as referenceRow}
+							{#each as2DArray(Object.entries($bookTree[$openChapter]).sort((a, b) => a[0].match(/\d+$/g)[0] - b[0].match(/\d+$/g)[0])) as referenceRow}
 								<div class="row">
-									{#each referenceRow as reference}
-										<button class:verse-selected={$openReference == reference} class="verse-select" on:click={() => openReference.set(reference)}>{reference.match(/\d+$/g)[0]}</button>
+									{#each referenceRow as [reference, readings]}
+										<button disabled={readings.length == 0} class:verse-selected={$openReference == reference} class="verse-select" on:click={() => openReference.set(reference)}>{reference.match(/\d+$/g)[0]}</button>
 									{/each}
 								</div>
 							{/each}
@@ -786,14 +786,24 @@
 	.verse-select-row,
 	.verse-select-row > div.row,
 	.chapter-select-row {
-		margin-top: 0.5rem;
-		margin-bottom: 0.5rem;
+		margin-top: 0.25rem;
+		margin-bottom: 0.25rem;
 	}
 	
 	button.chapter-select,
 	button.verse-select {
 		width: 4ch;
 		padding: 0.25rem;
+	}
+
+	button.chapter-select {
+		/* margin-left: ; */
+		font-size: 1.25rem;
+	}
+
+	button.verse-select {
+		margin-left: 0.25rem;
+		/* font-size: 1.0rem; */
 	}
 
 	input:hover,
