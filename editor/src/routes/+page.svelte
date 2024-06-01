@@ -691,7 +691,7 @@
 
 	.collapsible {
 		cursor: pointer;
-		padding: 10px;
+		margin: 10px;
 		border: none;
 		outline: none;
 		text-align: left;
@@ -711,7 +711,8 @@
 	}
 
 	.content {
-		padding: 0 15px;
+		padding: 0 2ch;
+		margin: 0 15px;
 		/* overflow: hidden; */
 		/* border-radius: 12px; */
 		margin-bottom: 10px;
