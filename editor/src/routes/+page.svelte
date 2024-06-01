@@ -609,23 +609,17 @@
 	}
 
 	.main-content {
-		border-color: var(--py);
 		max-height: 95vh;
 		/* width: 80vw; */
 		overflow-y: scroll;
 		overflow-x: hidden;
 	}
 
-	.content.chapter {
-		border-color: var(--pr);
-	}
-
-	.content.verse {
-		border-color: var(--pb);
-	}
-
+	.main-content,
+	.content.chapter,
+	.content.verse,
 	.content.reading {
-		border-color: var(--pg);
+		border-color: var(--pb);
 	}
 
 	.content {
@@ -713,7 +707,7 @@
 	.bottom-row > div > input {
 		border-radius: 8px;
 		border: 1px solid black;
-		width: 18ch;
+		width: 22ch;
 		text-align: center;
 		align-content: center;
 		background: #e9ecef;
@@ -731,6 +725,8 @@
 		border-radius: 8px;
 	}
 
+	input:hover,
+	input:focus,
 	button:hover {
 		background: var(--hb);
 	}
