@@ -17,7 +17,7 @@
 	/**
 	 * @param {string} reference
 	*/
-	function openThisReading(reference) {
+	function openFirstReading(reference) {
 		// openReference.set(reference);
 		const readingId = document
 			.getElementById(asId(reference))
@@ -82,12 +82,19 @@
 			const chapterSize = document.querySelector(".button-content.chapter").scrollHeight;
 
 			const versesBefore = parseInt($openReference.match(/\d+$/g)[0]) - 1;
-			const verseSize = document.querySelector(`#${asId($openChapter)} .button-content.verse`).scrollHeight;
+			// const verseSize = document.querySelector(`#${asId($openChapter)} .button-content.verse`).scrollHeight;
+			const verseSize = [...document.querySelectorAll(`.button-content.verse`)].find((r) => r?.scrollHeight && r?. scrollHeight > 0)?.scrollHeight;
 			// const verseSize = 70;
 
 			const readingsBefore = $bookTree[$openChapter][$openReference].findIndex((r) => r.sid == id);
-			const readingsSize = document.querySelector(`#${asId($openReference)} .button-content.reading`).scrollHeight;
+			// const readingsSize = document.querySelector(`#${asId($openReference)} .button-content.reading`).scrollHeight;
+			const readingsSize = [...document.querySelectorAll(`.button-content.reading`)].find((r) => r?.scrollHeight && r?. scrollHeight > 0)?.scrollHeight;
 			// const readingsSize = 81;
+
+			if(!verseSize || !readingsSize) {
+				setTimeout(() => scrollIntoMiddle(id), 100)
+				return;
+			}
 
 			const newScroll = (chaptersBefore * chapterSize) + (versesBefore * verseSize) + (readingsBefore * readingsSize);
 
@@ -412,7 +419,7 @@
 		})
 		openReference.subscribe((r) => {
 			// scrollIntoMiddle()
-			openThisReading(r)
+			openFirstReading(r)
 		})
 		// when a new reading is opened
 		openReading.subscribe((r) => {
@@ -427,7 +434,7 @@
 				audio.currentTime = 0;
 				audio.play()
 			}
-			openThisReading(r)
+			// openFirstReading(r)
 			// scroll to new reading
 			scrollIntoMiddle(r);
 		});
