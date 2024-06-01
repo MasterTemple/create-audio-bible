@@ -5,7 +5,55 @@
 
 	const domain = 'http://127.0.0.1:5000';
 	const bookTree = writable({});
-	const config = writable({});
+	const config = writable({
+		book: "Loading...",
+		name: "Loading...",
+	});
+	const openChapter = writable('');
+	const openReference = writable('');
+	const openReading = writable('');
+
+	function centerElement(childElement) {
+		const mainContent = document.querySelector("div.main-content");
+		const childHeight = childElement.offsetHeight;
+		const mainContentHeight = mainContent.clientHeight;
+
+		// Calculate the scroll position to center the element
+		const scrollTop = ((mainContentHeight - childHeight) / 2) + childHeight;
+
+		// Update the scrollTop property
+		mainContent.scrollTop += scrollTop;
+	}
+
+	/**
+	 *
+	 * @param {string} id
+	 */
+	async function scrollIntoMiddle(id) {
+		const element = document.getElementById(id);
+		console.log({id, element})
+		if(element != null) {
+			// centerElement(element)
+
+			// document.querySelector("div.main-content").scrollTop += 150
+			// element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+			// window.scrollBy(0, 150)
+			// const element = document.getElementById(asId(id));
+			// const elementRect = element.getBoundingClientRect();
+			// const absoluteElementTop = elementRect.top + window.pageYOffset;
+			// const middle = absoluteElementTop - window.innerHeight / 2;
+			// window.scrollTo(0, middle);
+
+			// Element.prototype.documentOffsetTop = function () {
+			// 		return this.offsetTop + ( this.offsetParent ? this.offsetParent.documentOffsetTop() : 0 );
+			// };
+			//
+			// var top = element.documentOffsetTop() - ( window.innerHeight / 2 );
+			// window.scrollTo( 0, top );
+
+			// element.scrollIntoView();
+		}
+	}
 
 	/**
 	 * @param {string} - endpoint
@@ -78,14 +126,14 @@
 	 */
 	function openFile(id) {
 		// doesn't work right now
-		window.open(domain + `/file?id=${id}`)
+		window.open(domain + `/file?id=${id}`);
 	}
 
 	/**
 	 * @returns {void}
 	 */
-	async function save() {
-		const data = { "book_tree": $bookTree };
+	async function saveBookTree() {
+		const data = { book_tree: $bookTree };
 		const json = await json_post('/save', data);
 	}
 
@@ -98,32 +146,87 @@
 	 * @param {Object} reading
 	 */
 	function audioUrl(reading) {
-			return `${domain}/audio?file_id=${reading.id}&start_time=${reading.start_time}&end_time=${reading.end_time}&volume=${reading?.volume || 1.0}`
+		return `${domain}/audio?file_id=${reading.id}&start_time=${reading.start_time}&end_time=${reading.end_time}&volume=${reading?.volume || 1.0}`;
 	}
 
-	 // * @param {string} id - file id
-	 // * @param {string} reference - file id
+	// * @param {string} id - file id
+	// * @param {string} reference - file id
 	/**
 	 * @param {Object} reading
 	 */
 	function editReading(reading) {
-		//! ALRIGHT ADD ID AND REFERENCE TO READING VARIABLE OK YESC
-		console.log({reading})
-		// const audioId = asId(`${reference} ${i} audio`);
-		reading.audio.preload = "auto"
-		reading.audio.load()
-		// reading.audio.querySelector("source").source = audioUrl(reading);
+		console.log({ reading });
+		reading.audio.preload = 'auto';
+		reading.audio.load();
+		saveBookTree();
 	}
 
 	/**
-	 * @param {string} id - file id
+	 * @param {Object} reading
 	 */
-	function useReading(id) {
-		// save selection
-		// collapse current verse tree and go to next verse
+	function useReading(reading) {
+		// unuse other reading
+		const chapter = reading.reference.replace(/:\d+$/, '');
+		const data = $bookTree;
+		data[chapter][reading.reference] = data[chapter][reading.reference].map((r) => {
+			return {
+				...r,
+				use: r.sid == reading.sid
+			};
+		});
+		bookTree.set(data);
+		// save selection?
+		saveBookTree();
+		// move on to next verse
+		const b = reading.reference.match(/.*(?= \d+:)/g)[0];
+		const ch = reading.reference.match(/\d+(?=:)/g)[0];
+		const v = reading.reference.match(/\d+$/g)[0];
+		const nextReference = `${b} ${ch}:${parseInt(v) + 1}`;
+		const nextChapter = `${b} ${parseInt(ch) + 1}`;
+		const nextChapterReference = `${nextChapter}:1`;
+		// is in same chapter
+		if (Object.keys($bookTree[chapter]).find((r) => r == nextReference)) {
+			openReference.set(nextReference);
+			const nextReadingId = document.getElementById(asId(nextReference))?.querySelector("div.content.reading").id;
+			openReading.set(nextReadingId);
+		}
+		// is in same chapter
+		else if (Object.keys($bookTree).find((c) => c == nextChapter)) {
+			openChapter.set(nextChapter);
+			openReference.set(nextChapterReference);
+			const nextReadingId = document.getElementById(asId(nextChapterReference))?.querySelector("div.content.reading").id;
+			openReading.set(nextReadingId);
+		}
+
+		// // or
+		// // is in same chapter
+		// const chapterKeys = Object.keys($bookTree)
+		// const referenceKeys = Object.keys($bookTree[chapter]);
+		// console.log({chapterKeys, referenceKeys})
+		// const referenceIndex = referenceKeys.findIndex((r) => r == reading.reference);
+		// // if next verse is in same chapter
+		// if(referenceIndex + 1 < referenceKeys.length) {
+		// 	const nextReference = referenceKeys[referenceIndex + 1];
+		// 	openReference.set(nextReference);
+		// }
+		// // verse is in the next chapter
+		// else {
+		// 	const chapterIndex = chapterKeys.findIndex((c) => c == chapter);
+		// 	if(chapterIndex + 1 < chapterKeys.length) {
+		// 		const nextChapter = chapterKeys[chapterIndex + 1];
+		// 		openChapter.set(nextChapter);
+		// 		// first verse of that new chapter
+		// 		openReference.set(nextChapter + ":1")
+		// 	}
+		// }
+		// console.log({
+		// 	$openChapter,
+		// 	$openReference,
+		// 	$openReading
+		// })
 	}
 
-	const esv = writable({})
+	const esv = writable({});
 
 	/**
 	 * @param {string} book - book in the Bible
@@ -131,7 +234,7 @@
 	async function getReferences(book) {
 		const data = { book };
 		const json = await json_post('/esv', data);
-		esv.set(json)
+		esv.set(json);
 	}
 
 	/**
@@ -167,13 +270,21 @@
 			const chapter = reference.match(/.*(?=:)/g)[0];
 			// const chapterNumber = parseInt(reference.match(/\d+(?=:)/g)[0]);
 			// console.log({chapter, reference, chapterNumber, bool: chapterNumber > 2})
+			let oneIsUsed = false;
 			tree[chapter][reference] = readings.slice(0, 5).map((r) => {
+				if (r.use) oneIsUsed = true;
 				return {
 					...r,
 					reference,
-					url: audioUrl(r)
-				}
+					url: audioUrl(r),
+					volume: r.volume || 1.0,
+					use: r.use || false,
+					sid: `${r.id}-${r.start_seg}-${r.end_seg}`
+				};
 			});
+			if (!oneIsUsed && tree[chapter][reference].length > 0) {
+				tree[chapter][reference][0].use = true;
+			}
 		}
 		bookTree.set(tree);
 	}
@@ -183,10 +294,14 @@
 		await setConfig();
 
 		// set ESV book data
-		await getReferences($config.book)
+		await getReferences($config.book);
 
 		// get reading info
 		await setBookTree();
+
+		openReading.subscribe((r) => {
+			scrollIntoMiddle(r);
+		});
 	});
 </script>
 
@@ -199,85 +314,129 @@
 	<body>
 		<div class="container">
 			<div class="header">
-				<h1>{$config.name}</h1>
-				<a href="file:///home/dgmastertemple/Documents/GitHub/create-audio-bible/projects/Ephesians - Tim Conway/json" on:click={() => window.open("file:///home/dgmastertemple/Documents/GitHub/create-audio-bible/projects/Ephesians - Tim Conway/json")}>click</a>
-				<!-- make a drop-down to select export audio files in verses, chapters, or the whole book -->
-				<div class="row">
-					<button>Export</button>
-					<button on:click={save}>Save</button>
+				<div class="center col">
+					<h1>{$config?.name}</h1>
+					<!-- chapter list? -->
+					<div class="row">
+						<!-- make a drop-down to select export audio files in verses, chapters, or the whole book -->
+						<button>Export</button>
+						<button on:click={saveBookTree}>Save</button>
+					</div>
 				</div>
 			</div>
 			<div class="main-content">
+				<div class="collapsible">
 
-			{#each Object.entries($bookTree) as [chapter, referencesToReadings]}
-				<button class="collapsible chapter" on:click={() => toggleContent(chapter)}>
-					<h2>{chapter}</h2>
-				</button>
-				<div id={asId(chapter)} class="content chapter">
-					{#each Object.entries(referencesToReadings).sort((a, b) => a[0].match(/\d+$/g)[0] - b[0].match(/\d+$/g)[0]) as [reference, readings]}
-						<button class="collapsible button-content verse" on:click={() => toggleContent(reference)}>
-							<h3>{reference}</h3>
-							<!-- {#await getReference(reference) then content} -->
-							<!-- 	<p class="esv">{content}</p> -->
-							<!-- {/await} -->
+				{#each Object.entries($bookTree) as [chapter, referencesToReadings]}
+					<button
+						class="collapsible button-content chapter"
+						on:click={() => openChapter.set($openChapter != chapter ? chapter : '')}
+					>
+						<h2>{chapter}</h2>
+					</button>
+					<div
+						id={asId(chapter)}
+						class="content chapter"
+						style="display:{$openChapter == chapter ? 'block' : 'none'};"
+					>
+						{#each Object.entries(referencesToReadings).sort((a, b) => a[0].match(/\d+$/g)[0] - b[0].match(/\d+$/g)[0]) as [reference, readings]}
+							<button
+								class="collapsible button-content verse"
+								on:click={() => openReference.set($openReference != reference ? reference : '')}
+							>
+								<h3>{reference}</h3>
+								<!-- {#await getReference(reference) then content} -->
+								<!-- 	<p class="esv">{content}</p> -->
+								<!-- {/await} -->
 								<p class="esv">{$esv[reference]}</p>
-						</button>
+							</button>
 
-						<div id={asId(reference)} class="content verse">
-							{#each readings as reading, i}
-								<button class="collapsible button-content reading" on:click={toggleContent(`${reference} ${i}`)}>
-									<h4>Reading {i + 1}</h4>
-									<p>{reading.content || 'No audio content...'}</p>
-								</button>
-								<div id={asId(`${reference} ${i}`)} class="content reading">
-									<div class="top-row row">
-										<audio
-											preload="none"
-											bind:this={reading.audio}
-											controls
-										>
-											<!-- <source src={audioUrl(reading)} type="audio/mpeg" /> -->
-											<source
-												src={reading.url}
-												type="audio/mpeg"
-											/>
-										</audio>
+							<div
+								id={asId(reference)}
+								class="content verse"
+								style="display:{$openReference == reference ? 'block' : 'none'};"
+							>
+								{#each readings as reading, i}
+									<button
+										class="collapsible button-content reading"
+										on:click={() => openReading.set($openReading != reading.sid ? reading.sid : '')}
+									>
+										<h4>Reading {i + 1}</h4>
+										<p>{reading.content || 'No audio content...'}</p>
+									</button>
+									<div
+										id={reading.sid}
+										class="content reading"
+										style="display:{$openReading == reading.sid ? 'block' : 'none'};"
+									>
+										<div class="top-row row">
+											<audio preload="none" bind:this={reading.audio} controls>
+												<!-- <source src={audioUrl(reading)} type="audio/mpeg" /> -->
+												<source src={reading.url} type="audio/mpeg" />
+											</audio>
 											<div class="start_time">
 												Start:
-												<input type="number" bind:value={reading.start_time} on:input={() => {reading.url = audioUrl(reading)}}>
+												<input
+													type="number"
+													bind:value={reading.start_time}
+													on:input={() => {
+														reading.url = audioUrl(reading);
+													}}
+												/>
 											</div>
 											<div class="end_time">
 												End:
-												<input type="number" bind:value={reading.end_time} on:input={() => {reading.url = audioUrl(reading)}}>
+												<input
+													type="number"
+													bind:value={reading.end_time}
+													on:input={() => {
+														reading.url = audioUrl(reading);
+													}}
+												/>
 											</div>
 											<div class="volume">
 												Volume:
-												<input type="number" value={reading?.volume || 1}>
+												<input
+													type="number"
+													bind:value={reading.volume}
+													on:input={() => {
+														reading.url = audioUrl(reading);
+													}}
+												/>
 											</div>
-									</div>
-									<div class="bottom-row row">
-										<div class="source">
-												Source: 
-												<input type="text" value={`${reading.id}.mp3`} disabled>
+										</div>
+										<div class="bottom-row row">
+											<div class="source">
+												Source:
+												<input type="text" value={`${reading.id}.mp3`} disabled />
 											</div>
-										<button class="open-button" on:click={() => openFile(reading.id)}>Open File</button>
-										<button class="delete-button" on:click={() => deleteReading(reading.id)}>Delete</button>
-										<button class="edit-button" on:click={() => editReading(reading)}>Edit</button>
-										<button class="use-button" on:click={() => useReading(reading.id)}>Use</button>
+											<button class="open-button" on:click={() => openFile(reading.id)}
+												>Open File</button
+											>
+											<button class="delete-button" on:click={() => deleteReading(reading.id)}
+												>Delete</button
+											>
+											<button class="edit-button" on:click={() => editReading(reading)}
+												>Apply</button
+											>
+											<!-- <button class="use-button" on:click={() => reading.use = true}>{reading.use ? "Using": "Use"}</button> -->
+											<button class="use-button" on:click={() => useReading(reading)}
+												>{reading.use ? 'Using' : 'Use'}</button
+											>
+										</div>
 									</div>
-								</div>
-							{/each}
-						</div>
-					{/each}
+								{/each}
+							</div>
+						{/each}
+					</div>
+				{/each}
 				</div>
-			{/each}
 			</div>
 		</div>
 	</body>
 </html>
 
 <style>
-
 	:root {
 		--white: #ffffff;
 		--primary: #008cff;
@@ -329,6 +488,8 @@
 
 	.container {
 		max-width: 80vw;
+		max-height: 90vh;
+		/* overflow-y: scroll; */
 		margin: 0 auto;
 		border: 2px solid #ccc;
 		padding: 10px;
@@ -336,18 +497,26 @@
 	}
 
 	.header {
+		width: 100%;
 		display: flex;
-		justify-content: space-between;
+		justify-content: center;
 		align-items: center;
 	}
 
 	.header h1 {
-		margin: 0;
+		/* margin: 0; */
+	}
+
+	.header .center .row,
+	.header .center {
+		display: flex;
+		align-content: center;
+		justify-content: center;
 	}
 
 	.collapsible {
 		cursor: pointer;
-		padding: 10px;
+		padding: 1rem;
 		border: none;
 		outline: none;
 		text-align: left;
@@ -357,22 +526,36 @@
 		border-radius: 12px;
 	}
 
-	.collapsible:hover,
-	.collapsible.active {
-		background-color: #ddd;
+	.collapsible:hover {
+		background-color: var(-hb);
 	}
 
-	.main-content,
+	.collapsible:focus,
+	.collapsible:active {
+		background-color: var(-pb);
+	}
+
 	.content {
 		padding: 0 15px;
-		overflow: hidden;
-		border-left: 3px solid #000;
+		/* overflow: hidden; */
 		/* border-radius: 12px; */
 		margin-bottom: 10px;
 	}
+	.main-content,
+	.content {
+		border-left: 3px solid #000;
+	}
+
+	.container {
+		overflow-y: hidden;
+	}
 
 	.main-content {
-		border-color: var(--py)
+		border-color: var(--py);
+		max-height: 95vh;
+		/* width: 80vw; */
+		overflow-y: scroll;
+		overflow-x: hidden;
 	}
 
 	.content.chapter {
@@ -466,7 +649,7 @@
 	.top-row > div > input {
 		border-radius: 8px;
 		border: 1px solid black;
-		width: 7ch;
+		width: 9ch;
 	}
 
 	.bottom-row > div > input {
@@ -478,12 +661,16 @@
 		background: #e9ecef;
 	}
 
-	.bottom-row > button {
+	button {
 		padding: 0.5rem;
 		font-size: 1rem;
 		margin-left: 1rem;
 		width: 12ch;
 		border-radius: 8px;
+	}
+
+	button:hover {
+		background: var(--hb);
 	}
 
 	.open-button {
@@ -518,5 +705,14 @@
 		background: var(--g);
 	}
 
+	input::-webkit-outer-spin-button,
+	input::-webkit-inner-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
 
+	/* Firefox */
+	input[type='number'] {
+		-moz-appearance: textfield;
+	}
 </style>

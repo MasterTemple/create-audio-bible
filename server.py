@@ -9,10 +9,11 @@ Endpoints:
     POST: /save(book_tree) -> None
 """
 
+from functools import lru_cache
 import os
 import sqlite3
 from textwrap import indent
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, Response, request, send_file, jsonify
 import subprocess
 from io import BytesIO
 from flask_cors import CORS
@@ -95,6 +96,7 @@ def config():
     """
     return reply(get_project_config())
 
+@lru_cache()
 @app.route('/readings', methods=['GET'])
 def readings():
     """
@@ -126,9 +128,11 @@ def file():
     """
     project_name = get_current_project()
     id = request.args.get("id")
-    output_path = os.path.join(PROJECT_DIR, project_name, PROJECT_DOWNLOADS_DIR, f'{id}.mp3')
-    with open(output_path, "rb") as f:
-        return f.read()
+    file_path = os.path.join(PROJECT_DIR, project_name, PROJECT_DOWNLOADS_DIR, f'{id}.mp3')
+    if os.path.isfile(file_path):
+        return send_file(file_path, mimetype="audio/mpeg")
+    else:
+        return "File not found", 404
 
 @app.route('/audio', methods=['GET'])
 def audio():
@@ -168,6 +172,7 @@ def export():
     Parameters:
     (book_tree) -> .mp3 | .zip
     """
+    # pro move, create symbolic link from selected .mp3 to exported new .mp3 (though modify the image if necessary)
     pass
 
 @app.route('/save', methods=['POST'])
@@ -194,6 +199,7 @@ def save():
                   "end_time": reading["end_time"],
                   "end_seg": reading["end_seg"],
                   "content": reading["content"],
+                  "use": reading["use"],
                 })
 
     readings_edited_path = os.path.join(PROJECT_DIR, get_current_project(), PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED)
