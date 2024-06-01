@@ -99,8 +99,24 @@
 			const newScroll = (chaptersBefore * chapterSize) + (versesBefore * verseSize) + (readingsBefore * readingsSize);
 
 			// console.log({chaptersBefore, chapterSize, versesBefore, verseSize, readingsBefore, readingsSize, currentScroll: mainContent.scrollTop, newScroll: mainContent.scrollTop + newScroll, $openChapter, $openReference})
-			console.log({versesBefore, verseSize, readingsBefore, readingsSize, currentScroll: mainContent.scrollTop, newScroll: mainContent.scrollTop + newScroll})
+			// console.log({versesBefore, verseSize, readingsBefore, readingsSize, currentScroll: mainContent.scrollTop, newScroll: mainContent.scrollTop + newScroll})
+			const oldScroll = mainContent.scrollTop;
 			mainContent.scrollTop = newScroll
+
+			// console.log({versesBefore, oldScroll, currentScroll: mainContent.scrollTop, newScroll})
+			// console.log(document.querySelector(".main-content").scrollTop)
+			// setTimeout(() => {
+			// 	console.log(document.querySelector(".main-content").scrollTop)
+			// 	mainContent.scrollTop = newScroll;
+			// }, 250)
+
+			const interval = setInterval(() => {
+				console.log(document.querySelector(".main-content").scrollTop)
+				mainContent.scrollTop = newScroll;
+				}, 50)
+			setTimeout(() => {
+				clearInterval(interval)
+			}, 300)
 
 
 			// centerElement(element)
