@@ -160,25 +160,25 @@
 			<div class="main-content">
 
 			{#each Object.entries($bookTree) as [chapter, referencesToReadings]}
-				<button class="collapsible" on:click={() => toggleContent(chapter)}>
+				<button class="collapsible chapter" on:click={() => toggleContent(chapter)}>
 					<h2>{chapter}</h2>
 				</button>
-				<div id={asId(chapter)} class="content">
+				<div id={asId(chapter)} class="content chapter">
 					{#each Object.entries(referencesToReadings).sort((a, b) => a[0].match(/\d+$/g)[0] - b[0].match(/\d+$/g)[0]) as [reference, readings]}
-						<button class="collapsible button-content" on:click={() => toggleContent(reference)}>
+						<button class="collapsible button-content verse" on:click={() => toggleContent(reference)}>
 							<h3>{reference}</h3>
 							{#await getReference(reference) then content}
 								<p class="esv">{content}</p>
 							{/await}
 						</button>
 
-						<div id={asId(reference)} class="content">
+						<div id={asId(reference)} class="content verse">
 							{#each readings as reading, i}
-								<button class="collapsible button-content" on:click={toggleContent(`${reference} ${i}`)}>
+								<button class="collapsible button-content reading" on:click={toggleContent(`${reference} ${i}`)}>
 									<h4>Reading {i + 1}</h4>
 									<p>{reading.content || 'No audio content...'}</p>
 								</button>
-								<div id={asId(`${reference} ${i}`)} class="content">
+								<div id={asId(`${reference} ${i}`)} class="content reading">
 									<div class="top-row row">
 										<audio
 											preload="none"
@@ -225,6 +225,51 @@
 </html>
 
 <style>
+
+	:root {
+		--white: #ffffff;
+		--primary: #008cff;
+		--secondary: #0051ff;
+		--tertiary: #0031cf;
+		--action: #00af35;
+		--info: #a100c2;
+		--accent: #ff5e00;
+		--warning: #ff4a53;
+
+		--black: #000000;
+		--dark0: #111111;
+		--dark1: #1e2124;
+		--dark2: #282b30;
+		--dark3: #36393e;
+		--dark4: #424549;
+		--dark5: #525559;
+		--dark6: #626569;
+		--dark7: #727579;
+
+		--border-radius: 5px;
+
+		/*
+		h = hint
+		*/
+		--hy: #fff3bf;
+		--hr: #ffe3e3;
+		--hb: #d0ebff;
+		--hg: #e9fac8;
+
+		/*
+		p = pastel
+		*/
+		--py: #ffec99;
+		--pr: #ffc9c9;
+		--pb: #a5d8ff;
+		--pg: #b2f2bb;
+
+		--y: #ffd43b;
+		--r: #ff8787;
+		--b: #4dabf7;
+		--g: #69db7c;
+	}
+
 	body {
 		font-family: Arial, sans-serif;
 		margin: 20px;
@@ -269,10 +314,27 @@
 	.content {
 		padding: 0 15px;
 		overflow: hidden;
-		border-left: 3px solid #ccc;
-		border-radius: 12px;
+		border-left: 3px solid #000;
+		/* border-radius: 12px; */
 		margin-bottom: 10px;
 	}
+
+	.main-content {
+		border-color: var(--py)
+	}
+
+	.content.chapter {
+		border-color: var(--pr);
+	}
+
+	.content.verse {
+		border-color: var(--pb);
+	}
+
+	.content.reading {
+		border-color: var(--pg);
+	}
+
 	.content {
 		display: none;
 	}
@@ -294,6 +356,18 @@
 	.volume {
 		margin-right: 10px;
 	}
+
+	/* button.chapter { */
+	/* 	background: var(--hr); */
+	/* } */
+	/**/
+	/* button.verse { */
+	/* 	background: var(--hg); */
+	/* } */
+	/**/
+	/* button.reading { */
+	/* 	background: var(--hb); */
+	/* } */
 
 	.button-content {
 		display: flex;
@@ -361,35 +435,35 @@
 	}
 
 	.open-button {
-		background: #ffec99;
+		background: var(--py);
 	}
 
 	.delete-button {
-		background: #ffc9c9;
+		background: var(--pr);
 	}
 
 	.edit-button {
-		background: #a5d8ff;
+		background: var(--pb);
 	}
 
 	.use-button {
-		background: #b2f2bb;
+		background: var(--pg);
 	}
 
 	.open-button:hover {
-		background: #ffd43b;
+		background: var(--y);
 	}
 
 	.delete-button:hover {
-		background: #ff8787;
+		background: var(--y);
 	}
 
 	.edit-button:hover {
-		background: #4dabf7;
+		background: var(--y);
 	}
 
 	.use-button:hover {
-		background: #69db7c;
+		background: var(--y);
 	}
 
 
