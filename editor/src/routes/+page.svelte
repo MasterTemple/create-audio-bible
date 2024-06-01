@@ -12,7 +12,12 @@
 	 * @returns {Object} - json
 	 */
 	async function json_get(endpoint) {
-		const res = await fetch(domain + endpoint);
+		const res = await fetch(domain + endpoint, {
+			headers: {
+				'Access-Control-Allow-Origin': domain,
+				'Content-Type': 'application/json'
+			}
+		});
 		const json = await res.json();
 		return json;
 	}
@@ -84,9 +89,25 @@
 	function deleteReading(id) {}
 
 	/**
-	 * @param {string} id - file id
+	 * @param {Object} reading
 	 */
-	function editReading(id) {}
+	function audioUrl(reading) {
+			return `${domain}/audio?file_id=${reading.id}&start_time=${reading.start_time}&end_time=${reading.end_time}&volume=${reading?.volume || 1.0}`
+	}
+
+	 // * @param {string} id - file id
+	 // * @param {string} reference - file id
+	/**
+	 * @param {Object} reading
+	 */
+	function editReading(reading) {
+		//! ALRIGHT ADD ID AND REFERENCE TO READING VARIABLE OK YESC
+		console.log({reading})
+		// const audioId = asId(`${reference} ${i} audio`);
+		reading.audio.load()
+		// reading.audio.preload = "auto"
+		// reading.audio.querySelector("source").source = audioUrl(reading);
+	}
 
 	/**
 	 * @param {string} id - file id
@@ -94,6 +115,17 @@
 	function useReading(id) {
 		// save selection
 		// collapse current verse tree and go to next verse
+	}
+
+	const esv = writable({})
+
+	/**
+	 * @param {string} book - book in the Bible
+	 */
+	async function getReferences(book) {
+		const data = { book };
+		const json = await json_post('/esv', data);
+		esv.set(json)
 	}
 
 	/**
@@ -129,15 +161,23 @@
 			const chapter = reference.match(/.*(?=:)/g)[0];
 			// const chapterNumber = parseInt(reference.match(/\d+(?=:)/g)[0]);
 			// console.log({chapter, reference, chapterNumber, bool: chapterNumber > 2})
-			tree[chapter][reference] = readings.slice(0, 5);
+			tree[chapter][reference] = readings.slice(0, 5).map((r) => {
+				return {
+					...r,
+					reference,
+					url: audioUrl(r)
+				}
+			});
 		}
 		bookTree.set(tree);
-		console.log($bookTree);
 	}
 
 	onMount(async () => {
 		// get project name & config
 		await setConfig();
+
+		// set ESV book data
+		await getReferences($config.book)
 
 		// get reading info
 		await setBookTree();
@@ -167,9 +207,10 @@
 					{#each Object.entries(referencesToReadings).sort((a, b) => a[0].match(/\d+$/g)[0] - b[0].match(/\d+$/g)[0]) as [reference, readings]}
 						<button class="collapsible button-content verse" on:click={() => toggleContent(reference)}>
 							<h3>{reference}</h3>
-							{#await getReference(reference) then content}
-								<p class="esv">{content}</p>
-							{/await}
+							<!-- {#await getReference(reference) then content} -->
+							<!-- 	<p class="esv">{content}</p> -->
+							<!-- {/await} -->
+								<p class="esv">{$esv[reference]}</p>
 						</button>
 
 						<div id={asId(reference)} class="content verse">
@@ -182,25 +223,26 @@
 									<div class="top-row row">
 										<audio
 											preload="none"
-											id="audio"
+											bind:this={reading.audio}
 											controls
 										>
+											<!-- <source src={audioUrl(reading)} type="audio/mpeg" /> -->
 											<source
-												src={`${domain}/audio?file_id=${reading.id}&start_time=${reading.start_time}&end_time=${reading.end_time}&volume=${reading?.volume || 1.0}`}
+												src={reading.url}
 												type="audio/mpeg"
 											/>
 										</audio>
 											<div class="start_time">
 												Start:
-												<input type="text" value={reading.start_time}>
+												<input type="number" bind:value={reading.start_time} on:input={() => {reading.url = audioUrl(reading)}}>
 											</div>
 											<div class="end_time">
 												End:
-												<input type="text" value={reading.end_time}>
+												<input type="number" bind:value={reading.end_time} on:input={() => {reading.url = audioUrl(reading)}}>
 											</div>
 											<div class="volume">
 												Volume:
-												<input type="text" value={reading?.volume || 1}>
+												<input type="number" value={reading?.volume || 1}>
 											</div>
 									</div>
 									<div class="bottom-row row">
@@ -210,7 +252,7 @@
 											</div>
 										<button class="open-button" on:click={() => openFile(reading.id)}>Open File</button>
 										<button class="delete-button" on:click={() => deleteReading(reading.id)}>Delete</button>
-										<button class="edit-button" on:click={() => editReading(reading.id)}>Edit</button>
+										<button class="edit-button" on:click={() => editReading(reading)}>Edit</button>
 										<button class="use-button" on:click={() => useReading(reading.id)}>Use</button>
 									</div>
 								</div>
@@ -455,15 +497,15 @@
 	}
 
 	.delete-button:hover {
-		background: var(--y);
+		background: var(--r);
 	}
 
 	.edit-button:hover {
-		background: var(--y);
+		background: var(--b);
 	}
 
 	.use-button:hover {
-		background: var(--y);
+		background: var(--g);
 	}
 
 

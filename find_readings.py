@@ -50,6 +50,15 @@ def get_esv_content(book: str, chapter: int, verse: int) -> str:
     element = res.fetchone()
     return element[0]
 
+def get_esv_book(book: str) -> dict[str, str]:
+    con = sqlite3.connect(bible_sqlite)
+    cur = con.cursor()
+    res = cur.execute(
+        f"SELECT chapter, verse, content FROM '{book}' ORDER BY verse, chapter ASC;")
+    elements = res.fetchall()
+    reference_to_content = {f"{book} {e[0]}:{e[1]}": e[2] for e in elements}
+    return reference_to_content
+
 def get_all_verses_and_content(book) -> list[Reference]:
     refs: list[Reference] = []
     for chapter, verses_in_chapter in enumerate(references[book]):

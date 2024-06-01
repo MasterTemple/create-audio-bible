@@ -17,7 +17,7 @@ from io import BytesIO
 from flask_cors import CORS
 import json
 from functions import get_project_config, get_db_name, get_current_project
-from find_readings import get_esv_content
+from find_readings import get_esv_book, get_esv_content
 from trim import trim_file
 from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_JSON_DIR
 from pymongo import MongoClient
@@ -48,8 +48,8 @@ def reply(data):
 # SERVER ROUTES #
 #################
 
-@app.route('/esv', methods=['POST'])
-def esv():
+@app.route('/verse', methods=['POST'])
+def verse():
     """
     Description:
         Get the contents of a Bible verse from reference (in ESV)
@@ -68,6 +68,20 @@ def esv():
         "verse": data['verse'], 
         "content": content
     })
+
+@app.route('/esv', methods=['POST'])
+def esv():
+    """
+    Description:
+        Get the ESV contents of a book in the Bible
+    Parameters:
+        book: str
+    Returns:
+        reference_to_content: dict[str, str] - reference to reference content
+    """
+    data: dict = request.json
+    reference_to_content = get_esv_book(data['book'])
+    return reply(reference_to_content)
 
 @app.route('/config', methods=['GET'])
 def config():
@@ -106,6 +120,13 @@ def audio():
         file.mp3
     """
     project_name = get_current_project()
+
+    # print(
+    #     request.args.get("file_id"),
+    #     request.args.get("start_time"),
+    #     request.args.get("end_time"),
+    #     request.args.get("volume") or 1
+    # )
 
     output_path = trim_file(
         project_name,
