@@ -498,6 +498,7 @@
 				<div class="collapsible">
 					{#each Object.entries($bookTree) as [chapter, referencesToReadings]}
 						<button
+							class:chapter-selected={$openChapter == chapter} 
 							class="collapsible button-content chapter"
 							on:click={() => openChapter.set($openChapter != chapter ? chapter : '')}
 						>
@@ -510,6 +511,7 @@
 						>
 							{#each Object.entries(referencesToReadings).sort((a, b) => a[0].match(/\d+$/g)[0] - b[0].match(/\d+$/g)[0]) as [reference, readings]}
 								<button
+									class:verse-selected={$openReference == reference} 
 									class="collapsible button-content verse"
 									on:click={() => openReference.set($openReference != reference ? reference : '')}
 								>
@@ -533,7 +535,8 @@
 											class="collapsible button-content reading"
 											on:click={() =>
 												openReading.set($openReading != reading.sid ? reading.sid : '')}
-											class:selected-reading={reading.use}
+											class:using-reading={reading.use}
+											class:reading-selected={$openReading == reading.sid} 
 										>
 											<h4>Reading {i + 1}</h4>
 											<p>{reading.content || 'No audio content...'}</p>
@@ -930,7 +933,10 @@
 
 	.verse-selected,
 	.chapter-selected,
-	.selected-reading {
+	.reading-selected {
+		background-color: var(--pb);
+	}
+	.using-reading {
 		background-color: var(--pg);
 	}
 </style>
