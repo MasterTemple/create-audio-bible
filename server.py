@@ -269,7 +269,6 @@ def create_chapter_audio_file(cfg: dict[str,str], files_to_join: list[str], read
     # add_album_art(output_file)
     os.remove('list.txt')
 
-
 def create_book_audio_file(cfg: dict[str,str], files_to_join: list[str], reading: Reading, overwrite:bool = True, bitrate: int=192) -> str:
     project_name = cfg["name"]
     ref = reading.ref
@@ -350,7 +349,7 @@ def export():
             for reading in readings:
                 output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{reading.ref.fmt_verse} - {cfg["author"]}.mp3')
                 files_to_join.append(output_file)
-            create_chapter_audio_file(cfg, files_to_join, readings[0], False)
+            create_chapter_audio_file(cfg, files_to_join, readings[0], True)
 
     if export_type == "book":
         chapter_count = max([r.ref.chapter for r in reading_list_sorted])
@@ -359,7 +358,7 @@ def export():
         for i in range(1, chapter_count + 1):
             output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_CHAPTERS, f'{reading.ref.fmt_chapter} - {cfg["author"]}.mp3')
             files_to_join.append(output_file)
-        create_book_audio_file(cfg, files_to_join, reading, False)
+        create_book_audio_file(cfg, files_to_join, reading, True)
 
     zip_name = project_name
     # verses

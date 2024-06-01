@@ -12,6 +12,7 @@
 	const openChapter = writable('');
 	const openReference = writable('');
 	const openReading = writable('');
+	const showExportDropdown = writable(false);
 
 	/**
 	 * @param {string} reference
@@ -423,7 +424,27 @@
 		return result;
 	}
 
+	function pauseAllAudio() {
+		Object.values($bookTree).forEach((referencesToReadings) =>
+			Object.values(referencesToReadings).forEach((readings) =>
+				readings.forEach((reading) => reading.audio.pause())
+			)
+		);
+	}
+
 	onMount(async () => {
+		document.addEventListener("keydown", (e) => {
+			if(e.key == " ") {
+				// pauseAllAudio()
+				const audio = document.querySelector(`#audio-${$openReading}`);
+				if(audio.paused)
+					audio.play();
+				else
+					audio.pause();
+
+				e.preventDefault()
+			}
+		})
 		// get project name & config
 		await setConfig();
 
@@ -444,11 +465,7 @@
 		openReading.subscribe((r) => {
 			console.log({ newOpenReading: r });
 			// stop all other audios/previous audio
-			Object.values($bookTree).forEach((referencesToReadings) =>
-				Object.values(referencesToReadings).forEach((readings) =>
-					readings.forEach((reading) => reading.audio.pause())
-				)
-			);
+			pauseAllAudio();
 			// play audio of reading
 			const audio = document.querySelector(`#audio-${r}`);
 			// restart audio from beginning
@@ -476,7 +493,14 @@
 				<div class="center col">
 					<div class="row">
 						<h1>{$config?.name}</h1>
-						<button on:click={() => exportPrompt('verses')}>Export</button>
+						<div class="col">
+							<button on:click={() => showExportDropdown.set(!showExportDropdown)}>Export</button>
+							{#if $showExportDropdown}
+								<button on:click={() => exportPrompt('verses')}>Verses</button>
+								<button on:click={() => exportPrompt('chapters')}>Chapters</button>
+								<button on:click={() => exportPrompt('book')}>Book</button>
+							{/if}
+						</div>
 					</div>
 					<!-- chapter list? -->
 					<!-- <div class="row"> -->
