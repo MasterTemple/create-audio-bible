@@ -367,6 +367,9 @@
 		// get reading info
 		await setBookTree();
 
+		openChapter.subscribe((c) => {
+			openReference.set(c + ":1");
+		})
 		// when a new reading is opened
 		openReading.subscribe((r) => {
 			// stop all other audios/previous audio
@@ -607,7 +610,7 @@
 	}
 
 	.header h1 {
-		/* margin: 0; */
+		margin: 0;
 	}
 
 	.header .center .row,
