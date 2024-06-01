@@ -20,7 +20,7 @@ import subprocess
 from io import BytesIO
 from flask_cors import CORS
 import json
-from functions import add_album_art, get_project_config, get_db_name, get_current_project
+from functions import add_album_art, add_source_data, get_project_config, get_db_name, get_current_project, read_source_data, SourceData, embed_source_data, extract_source_data
 from find_readings import get_esv_book, get_esv_content
 from trim import trim_file
 from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_DIR_EXPORT, PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED, PROJECT_DOWNLOADS_DIR, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS
@@ -197,8 +197,15 @@ def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: 
     ref = reading.ref
     input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DOWNLOADS_DIR, f'{reading.id}.mp3')
     output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{ref.fmt_verse} - {cfg["author"]}.mp3')
-    if os.path.exists(output_file) and not overwrite:
-        return output_file
+
+    source_data = SourceData(reading.id, reading.start_time, reading.end_time, reading.volume)
+    if os.path.exists(output_file):
+        previous_data = extract_source_data(output_file)
+        if previous_data == source_data:
+            print(f"Skipping '{ref.fmt_verse}'")
+            return output_file
+    # if os.path.exists(output_file) and read_source_data(output_file) == source_data:
+    #     return output_file
 
 
     metadata_tags = [
@@ -237,6 +244,7 @@ def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: 
     ]
 
     subprocess.run(command)
+    embed_source_data(output_file, source_data)
     return output_file
 
 def create_chapter_audio_file(cfg: dict[str,str], files_to_join: list[str], reading: Reading, overwrite:bool = True, bitrate: int=192) -> str:
@@ -365,6 +373,7 @@ def export():
         filenames = [os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT, f'{reading.ref.book} - {cfg["author"]}.mp3') for reading in reading_list_sorted]
         zip_name = f"{cfg['book']} Reading"
 
+    return reply({})
     # zip_buffer = BytesIO()
     #
     # with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:

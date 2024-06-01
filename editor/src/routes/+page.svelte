@@ -249,7 +249,8 @@
 			book_tree: $bookTree,
 			export_type: exportType
 		};
-		download_post('/export', data);
+		// download_post('/export', data);
+		json_post('/export', data);
 	}
 
 	/**
@@ -473,7 +474,10 @@
 		<div class="container">
 			<div class="header">
 				<div class="center col">
-					<h1>{$config?.name}</h1>
+					<div class="row">
+						<h1>{$config?.name}</h1>
+						<button on:click={() => exportPrompt('verses')}>Export</button>
+					</div>
 					<!-- chapter list? -->
 					<!-- <div class="row"> -->
 					<!-- make a drop-down to select export audio files in verses, chapters, or the whole book -->
