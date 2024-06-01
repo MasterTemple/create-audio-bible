@@ -358,7 +358,7 @@
 					<!-- chapter list? -->
 					<div class="row">
 						<!-- make a drop-down to select export audio files in verses, chapters, or the whole book -->
-						<button on:click={saveBookTree}>Save</button>
+						<button id="save-button" on:click={saveBookTree}>Save</button>
 						<button on:click={() => exportPrompt('verses')}>Export Verses</button>
 						<button on:click={() => exportPrompt('chapters')}>Export Chapters</button>
 						<button on:click={() => exportPrompt('book')}>Export Book</button>
@@ -401,6 +401,7 @@
 											class="collapsible button-content reading"
 											on:click={() =>
 												openReading.set($openReading != reading.sid ? reading.sid : '')}
+											class:selected-reading={reading.use}
 										>
 											<h4>Reading {i + 1}</h4>
 											<p>{reading.content || 'No audio content...'}</p>
@@ -541,6 +542,7 @@
 		width: 100%;
 		display: flex;
 		justify-content: center;
+		text-align: center;
 		align-items: center;
 	}
 
@@ -702,6 +704,10 @@
 		background: #e9ecef;
 	}
 
+	#save-button {
+		margin-left: 0rem;
+	}
+
 	button {
 		padding: 0.5rem;
 		font-size: 1rem;
@@ -755,5 +761,8 @@
 	/* Firefox */
 	input[type='number'] {
 		-moz-appearance: textfield;
+	}
+	.selected-reading {
+		background-color: var(--pg);
 	}
 </style>
