@@ -13,22 +13,20 @@
 	const openReference = writable('');
 	const openReading = writable('');
 
-
 	/**
 	 * @param {string} reference
-	*/
+	 */
 	function openFirstReading(reference) {
 		// openReference.set(reference);
 		const readingId = document
 			.getElementById(asId(reference))
 			?.querySelector('div.content.reading')?.id;
 		// some references have no readings
-		if(readingId)
-			openReading.set(readingId);
+		if (readingId) openReading.set(readingId);
 	}
 	/**
 	 * @param {string} reference
-	*/
+	 */
 	function openNextReading(reference) {
 		const chapter = reference.replace(/:\d+$/, '');
 		const b = reference.match(/.*(?= \d+:)/g)[0];
@@ -74,34 +72,39 @@
 	 */
 	async function scrollIntoMiddle(id) {
 		const element = document.getElementById(id);
-		console.log({id, element})
+		console.log({ id, element });
 		// console.log({ id, element });
 		if (element != null) {
 			const mainContent = document.querySelector('div.main-content');
 			const chaptersBefore = parseInt($openChapter.match(/\d+$/g)[0]);
-			const chapterSize = document.querySelector(".button-content.chapter").scrollHeight;
+			const chapterSize = document.querySelector('.button-content.chapter').scrollHeight;
 
 			const versesBefore = parseInt($openReference.match(/\d+$/g)[0]) - 1;
 			// const verseSize = document.querySelector(`#${asId($openChapter)} .button-content.verse`).scrollHeight;
-			const verseSize = [...document.querySelectorAll(`.button-content.verse`)].find((r) => r?.scrollHeight && r?. scrollHeight > 0)?.scrollHeight;
+			const verseSize = [...document.querySelectorAll(`.button-content.verse`)].find(
+				(r) => r?.scrollHeight && r?.scrollHeight > 0
+			)?.scrollHeight;
 			// const verseSize = 70;
 
 			const readingsBefore = $bookTree[$openChapter][$openReference].findIndex((r) => r.sid == id);
 			// const readingsSize = document.querySelector(`#${asId($openReference)} .button-content.reading`).scrollHeight;
-			const readingsSize = [...document.querySelectorAll(`.button-content.reading`)].find((r) => r?.scrollHeight && r?. scrollHeight > 0)?.scrollHeight;
+			const readingsSize = [...document.querySelectorAll(`.button-content.reading`)].find(
+				(r) => r?.scrollHeight && r?.scrollHeight > 0
+			)?.scrollHeight;
 			// const readingsSize = 81;
 
-			if(!verseSize || !readingsSize) {
-				setTimeout(() => scrollIntoMiddle(id), 100)
+			if (!verseSize || !readingsSize) {
+				setTimeout(() => scrollIntoMiddle(id), 100);
 				return;
 			}
 
-			const newScroll = (chaptersBefore * chapterSize) + (versesBefore * verseSize) + (readingsBefore * readingsSize);
+			const newScroll =
+				chaptersBefore * chapterSize + versesBefore * verseSize + readingsBefore * readingsSize;
 
 			// console.log({chaptersBefore, chapterSize, versesBefore, verseSize, readingsBefore, readingsSize, currentScroll: mainContent.scrollTop, newScroll: mainContent.scrollTop + newScroll, $openChapter, $openReference})
 			// console.log({versesBefore, verseSize, readingsBefore, readingsSize, currentScroll: mainContent.scrollTop, newScroll: mainContent.scrollTop + newScroll})
 			const oldScroll = mainContent.scrollTop;
-			mainContent.scrollTop = newScroll
+			mainContent.scrollTop = newScroll;
 
 			// console.log({versesBefore, oldScroll, currentScroll: mainContent.scrollTop, newScroll})
 			// console.log(document.querySelector(".main-content").scrollTop)
@@ -111,13 +114,12 @@
 			// }, 250)
 
 			const interval = setInterval(() => {
-				console.log(document.querySelector(".main-content").scrollTop)
+				console.log(document.querySelector('.main-content').scrollTop);
 				mainContent.scrollTop = newScroll;
-				}, 50)
+			}, 50);
 			setTimeout(() => {
-				clearInterval(interval)
-			}, 300)
-
+				clearInterval(interval);
+			}, 300);
 
 			// centerElement(element)
 			// document.querySelector("div.main-content").scrollTop += 150
@@ -302,7 +304,7 @@
 		// save selection?
 		saveBookTree();
 		// move on to next verse
-		openNextReading(reading.reference)
+		openNextReading(reading.reference);
 		// // or
 		// // is in same chapter
 		// const chapterKeys = Object.keys($bookTree)
@@ -392,16 +394,16 @@
 			}
 		}
 		bookTree.set(tree);
-		console.log({$bookTree})
+		console.log({ $bookTree });
 	}
 
 	/**
-	* @param {Array<string>} arr 
-	* @returns {Array<Array<string>>}
-	*/
+	 * @param {Array<string>} arr
+	 * @returns {Array<Array<string>>}
+	 */
 	function as2DArray(arr, maxRowLength = 20) {
-		let rowCount = Math.floor(arr.length/maxRowLength);
-		if (arr.length > (maxRowLength * rowCount)) {
+		let rowCount = Math.floor(arr.length / maxRowLength);
+		if (arr.length > maxRowLength * rowCount) {
 			rowCount++;
 		}
 		maxRowLength = Math.round(arr.length / rowCount);
@@ -431,24 +433,28 @@
 		await setBookTree();
 
 		openChapter.subscribe((c) => {
-			openReference.set(c + ":1");
-		})
+			openReference.set(c + ':1');
+		});
 		openReference.subscribe((r) => {
 			// scrollIntoMiddle()
-			openFirstReading(r)
-		})
+			openFirstReading(r);
+		});
 		// when a new reading is opened
 		openReading.subscribe((r) => {
-			console.log({newOpenReading: r})
+			console.log({ newOpenReading: r });
 			// stop all other audios/previous audio
-			Object.values($bookTree).forEach((referencesToReadings) => Object.values(referencesToReadings).forEach((readings) => readings.forEach((reading) => reading.audio.pause())))
+			Object.values($bookTree).forEach((referencesToReadings) =>
+				Object.values(referencesToReadings).forEach((readings) =>
+					readings.forEach((reading) => reading.audio.pause())
+				)
+			);
 			// play audio of reading
 			const audio = document.querySelector(`#audio-${r}`);
 			// restart audio from beginning
 			const autoPlay = true;
-			if(audio && autoPlay) {
+			if (audio && autoPlay) {
 				audio.currentTime = 0;
-				audio.play()
+				audio.play();
 			}
 			// openFirstReading(r)
 			// scroll to new reading
@@ -478,15 +484,42 @@
 					<!-- </div> -->
 					<div class="row chapter-select-row">
 						{#each Object.keys($bookTree) as chapter}
-								<button class:chapter-selected={$openChapter == chapter} class="chapter-select" on:click={() => openChapter.set(chapter)}>{chapter.match(/\d+$/g)[0]}</button>
+							<button
+								class:chapter-selected={$openChapter == chapter}
+								class="chapter-select"
+								on:click={() => openChapter.set(chapter)}>{chapter.match(/\d+$/g)[0]}</button
+							>
 						{/each}
 					</div>
 					<div class="col verse-select-row">
-						{#if $openChapter != ""}
+						{#if $openChapter != ''}
 							{#each as2DArray(Object.entries($bookTree[$openChapter]).sort((a, b) => a[0].match(/\d+$/g)[0] - b[0].match(/\d+$/g)[0])) as referenceRow}
 								<div class="row">
 									{#each referenceRow as [reference, readings]}
-										<button disabled={readings.length == 0} class:verse-selected={$openReference == reference} class="verse-select" on:click={() => openReference.set(reference)}>{reference.match(/\d+$/g)[0]}</button>
+										<button
+											disabled={readings.length == 0}
+											class:verse-selected={$openReference == reference}
+											class="verse-select"
+											on:click={() => openReference.set(reference)}
+											>{reference.match(/\d+$/g)[0]}</button
+										>
+									{/each}
+								</div>
+							{/each}
+						{/if}
+					</div>
+					<div class="col reading-select-row">
+						{#if $openChapter != '' && $openReference != ''}
+							{#each as2DArray($bookTree[$openChapter][$openReference]) as readingRow}
+								<div class="row">
+									{#each readingRow as reading, i}
+										<button
+											class:reading-selected={$openReading == reading.sid}
+											class:using-reading={reading.use}
+											class="reading-select"
+											on:click={() => openReading.set(reading.sid)}
+											>{i + 1}
+										</button>
 									{/each}
 								</div>
 							{/each}
@@ -498,7 +531,7 @@
 				<div class="collapsible">
 					{#each Object.entries($bookTree) as [chapter, referencesToReadings]}
 						<button
-							class:chapter-selected={$openChapter == chapter} 
+							class:chapter-selected={$openChapter == chapter}
 							class="collapsible button-content chapter"
 							on:click={() => openChapter.set($openChapter != chapter ? chapter : '')}
 						>
@@ -511,7 +544,7 @@
 						>
 							{#each Object.entries(referencesToReadings).sort((a, b) => a[0].match(/\d+$/g)[0] - b[0].match(/\d+$/g)[0]) as [reference, readings]}
 								<button
-									class:verse-selected={$openReference == reference} 
+									class:verse-selected={$openReference == reference}
 									class="collapsible button-content verse"
 									on:click={() => openReference.set($openReference != reference ? reference : '')}
 								>
@@ -536,7 +569,7 @@
 											on:click={() =>
 												openReading.set($openReading != reading.sid ? reading.sid : '')}
 											class:using-reading={reading.use}
-											class:reading-selected={$openReading == reading.sid} 
+											class:reading-selected={$openReading == reading.sid}
 										>
 											<h4>Reading {i + 1}</h4>
 											<p>{reading.content || 'No audio content...'}</p>
@@ -547,7 +580,12 @@
 											style="display:{$openReading == reading.sid ? 'block' : 'none'};"
 										>
 											<div class="top-row row">
-												<audio id={'audio-' + reading.sid} preload="none" bind:this={reading.audio} controls>
+												<audio
+													id={'audio-' + reading.sid}
+													preload="none"
+													bind:this={reading.audio}
+													controls
+												>
 													<!-- <source src={audioUrl(reading)} type="audio/mpeg" /> -->
 													<source src={reading.url} type="audio/mpeg" />
 												</audio>
@@ -859,15 +897,18 @@
 		border-radius: 8px;
 	}
 
+	.reading-select-row,
+	.reading-select-row > div.row,
 	.verse-select-row,
 	.verse-select-row > div.row,
 	.chapter-select-row {
 		margin-top: 0.25rem;
 		margin-bottom: 0.25rem;
 	}
-	
+
 	button.chapter-select,
-	button.verse-select {
+	button.verse-select,
+	button.reading-select {
 		width: 4ch;
 		padding: 0.25rem;
 	}
@@ -877,7 +918,8 @@
 		font-size: 1.25rem;
 	}
 
-	button.verse-select {
+	button.verse-select,
+	button.reading-select {
 		margin-left: 0.25rem;
 		/* font-size: 1.0rem; */
 	}
