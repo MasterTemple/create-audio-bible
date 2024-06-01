@@ -12,7 +12,6 @@
 	const openChapter = writable('');
 	const openReference = writable('');
 	const openReading = writable('');
-	const showExportDropdown = writable(false);
 
 	/**
 	 * @param {string} reference
@@ -493,13 +492,13 @@
 				<div class="center col">
 					<div class="row">
 						<h1>{$config?.name}</h1>
-						<div class="col">
-							<button on:click={() => showExportDropdown.set(!showExportDropdown)}>Export</button>
-							{#if $showExportDropdown}
-								<button on:click={() => exportPrompt('verses')}>Verses</button>
-								<button on:click={() => exportPrompt('chapters')}>Chapters</button>
-								<button on:click={() => exportPrompt('book')}>Book</button>
-							{/if}
+						<div class="col dropdown">
+							<button class="dropbtn" on:click={() => exportPrompt("book")}>Export</button>
+								<div class="dropdown-content">
+									<button on:click={() => exportPrompt('verses')}>Verses</button>
+									<button on:click={() => exportPrompt('chapters')}>Chapters</button>
+									<button on:click={() => exportPrompt('book')}>Book</button>
+								</div>
 						</div>
 					</div>
 					<!-- chapter list? -->
@@ -1015,4 +1014,49 @@
 	.using-reading {
 		background-color: var(--pg);
 	}
+
+  /* .dropdown { */
+  /*   position: absolute; */
+  /*   background-color: #f9f9f9; */
+  /*   min-width: 160px; */
+  /*   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2); */
+  /*   z-index: 1; */
+  /* } */
+  /**/
+  /* .dropdown button { */
+  /*   color: black; */
+  /*   padding: 12px 16px; */
+  /*   text-decoration: none; */
+  /*   display: block; */
+  /*   text-align: left; */
+  /* } */
+  /**/
+  /* .dropdown button:hover { */
+  /*   background-color: #ddd; */
+  /* } */
+
+	.dropbtn {
+	}
+
+	.dropdown {
+		position: relative;
+		display: inline-block;
+	}
+
+	.dropdown-content {
+		display: none;
+		position: absolute;
+		/* min-width: 160px; */
+		/* box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); */
+		z-index: 1;
+	}
+
+
+	.dropdown-content button {
+		margin-top: 1ch;
+		/* margin-left: 0rem; */
+	}
+
+	.dropdown:hover .dropdown-content {display: block;}
+
 </style>

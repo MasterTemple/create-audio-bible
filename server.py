@@ -204,8 +204,7 @@ def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: 
         if previous_data == source_data:
             print(f"Skipping '{ref.fmt_verse}'")
             return output_file
-    # if os.path.exists(output_file) and read_source_data(output_file) == source_data:
-    #     return output_file
+    print(f"Creating '{ref.fmt_verse}'")
 
 
     metadata_tags = [
@@ -247,10 +246,28 @@ def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: 
     embed_source_data(output_file, source_data)
     return output_file
 
-def create_chapter_audio_file(cfg: dict[str,str], files_to_join: list[str], reading: Reading, overwrite:bool = True, bitrate: int=192) -> str:
+def create_chapter_audio_file(cfg: dict[str,str], files_to_join: list[str], readings: list[Reading], overwrite:bool = True, bitrate: int=192) -> str:
+    reading = readings[0]
     project_name = cfg["name"]
     ref = reading.ref
     output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_CHAPTERS, f'{ref.fmt_chapter} - {cfg["author"]}.mp3')
+
+
+    source_data_id = ";".join([",".join([reading.id, str(reading.start_time), str(reading.end_time), str(reading.volume)]) for reading in readings])
+    # it is still unique, don't ask
+    source_data = SourceData(
+        source_data_id,
+        0,
+        0,
+        0
+    )
+    if os.path.exists(output_file):
+        previous_data = extract_source_data(output_file)
+        if previous_data == source_data:
+            print(f"Skipping '{ref.fmt_chapter}'")
+            return output_file
+    print(f"Creating '{ref.fmt_chapter}'")
+
     if os.path.exists(output_file) and not overwrite:
         return output_file
 
@@ -266,6 +283,7 @@ def create_chapter_audio_file(cfg: dict[str,str], files_to_join: list[str], read
     ]
 
     subprocess.run(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c', 'copy', *metadata_tags, '-b:a', f'{bitrate}k', '-c:a', 'libmp3lame', output_file, '-y'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    embed_source_data(output_file, source_data)
     # add_album_art(output_file)
     os.remove('list.txt')
 
@@ -349,7 +367,7 @@ def export():
             for reading in readings:
                 output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{reading.ref.fmt_verse} - {cfg["author"]}.mp3')
                 files_to_join.append(output_file)
-            create_chapter_audio_file(cfg, files_to_join, readings[0], True)
+            create_chapter_audio_file(cfg, files_to_join, readings, True)
 
     if export_type == "book":
         chapter_count = max([r.ref.chapter for r in reading_list_sorted])
