@@ -11,6 +11,7 @@ Endpoints:
 
 import os
 import sqlite3
+from textwrap import indent
 from flask import Flask, request, send_file, jsonify
 import subprocess
 from io import BytesIO
@@ -19,7 +20,7 @@ import json
 from functions import get_project_config, get_db_name, get_current_project
 from find_readings import get_esv_book, get_esv_content
 from trim import trim_file
-from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_JSON_DIR
+from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED, PROJECT_DOWNLOADS_DIR
 from pymongo import MongoClient
 
 
@@ -103,9 +104,31 @@ def readings():
     Returns:
         book_tree
     """
-    with open(os.path.join(PROJECT_DIR, get_current_project(), PROJECT_JSON_DIR, JSON_READINGS_FILE), "r") as f:
+    readings_edited_path = os.path.join(PROJECT_DIR, get_current_project(), PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED)
+    readings_unedited_path = os.path.join(PROJECT_DIR, get_current_project(), PROJECT_JSON_DIR, JSON_READINGS_FILE)
+    file = readings_unedited_path
+
+    if os.path.exists(readings_edited_path):
+            file = readings_edited_path
+
+    with open(file, "r") as f:
         data = json.load(f)
     return reply(data)
+
+@app.route('/file', methods=['GET'])
+def file():
+    """
+    Description:
+    Parameters:
+        file_id: str
+    Returns:
+        file.mp3
+    """
+    project_name = get_current_project()
+    id = request.args.get("id")
+    output_path = os.path.join(PROJECT_DIR, project_name, PROJECT_DOWNLOADS_DIR, f'{id}.mp3')
+    with open(output_path, "rb") as f:
+        return f.read()
 
 @app.route('/audio', methods=['GET'])
 def audio():
@@ -152,9 +175,31 @@ def save():
     """
     Description:
     Parameters:
-    (book_tree) -> None
+        book_tree: []
+    Returns:
     """
-    pass
+    data: dict = request.json
+    book_tree = data["book_tree"]
+
+    readings_json = {}
+
+    for chapter, references_to_readings in book_tree.items():
+        for reference, readings in references_to_readings.items():
+            readings_json[reference] = []
+            for reading in readings:
+                readings_json[reference].append({
+                  "id": reading["id"],
+                  "start_time": reading["start_time"],
+                  "start_seg": reading["start_seg"],
+                  "end_time": reading["end_time"],
+                  "end_seg": reading["end_seg"],
+                  "content": reading["content"],
+                })
+
+    readings_edited_path = os.path.join(PROJECT_DIR, get_current_project(), PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED)
+    with open(readings_edited_path, "w") as f:
+        f.write(json.dumps(readings_json, indent=2))
+    return reply({})
 
 if __name__ == '__main__':
     # host server

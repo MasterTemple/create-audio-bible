@@ -78,9 +78,15 @@
 	 */
 	function openFile(id) {
 		// doesn't work right now
-		window.open(
-			`file:///home/dgmastertemple/Documents/GitHub/create-audio-bible/projects/Ephesians - Tim Conway/downloads/${id}.mp3`
-		);
+		window.open(domain + `/file?id=${id}`)
+	}
+
+	/**
+	 * @returns {void}
+	 */
+	async function save() {
+		const data = { "book_tree": $bookTree };
+		const json = await json_post('/save', data);
 	}
 
 	/**
@@ -104,8 +110,8 @@
 		//! ALRIGHT ADD ID AND REFERENCE TO READING VARIABLE OK YESC
 		console.log({reading})
 		// const audioId = asId(`${reference} ${i} audio`);
+		reading.audio.preload = "auto"
 		reading.audio.load()
-		// reading.audio.preload = "auto"
 		// reading.audio.querySelector("source").source = audioUrl(reading);
 	}
 
@@ -194,8 +200,12 @@
 		<div class="container">
 			<div class="header">
 				<h1>{$config.name}</h1>
+				<a href="file:///home/dgmastertemple/Documents/GitHub/create-audio-bible/projects/Ephesians - Tim Conway/json" on:click={() => window.open("file:///home/dgmastertemple/Documents/GitHub/create-audio-bible/projects/Ephesians - Tim Conway/json")}>click</a>
 				<!-- make a drop-down to select export audio files in verses, chapters, or the whole book -->
-				<button>Export</button>
+				<div class="row">
+					<button>Export</button>
+					<button on:click={save}>Save</button>
+				</div>
 			</div>
 			<div class="main-content">
 
