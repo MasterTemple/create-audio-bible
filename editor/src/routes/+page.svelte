@@ -344,13 +344,15 @@
 		// when a new reading is opened
 		openReading.subscribe((r) => {
 			// stop all other audios/previous audio
-
+			Object.values($bookTree).forEach((referencesToReadings) => Object.values(referencesToReadings).forEach((readings) => readings.forEach((reading) => reading.audio.pause())))
 			// play audio of reading
 			const audio = document.querySelector(`#audio-${r}`);
 			// restart audio from beginning
 			const autoPlay = true;
-			if(audio && autoPlay)
+			if(audio && autoPlay) {
+				audio.currentTime = 0;
 				audio.play()
+			}
 			// scroll to new reading
 			scrollIntoMiddle(r);
 		});
