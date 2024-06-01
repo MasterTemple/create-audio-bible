@@ -9,6 +9,7 @@ Endpoints:
     POST: /save(book_tree) -> None
 """
 
+import re
 from functools import lru_cache
 import os
 import sqlite3
@@ -21,8 +22,9 @@ import json
 from functions import get_project_config, get_db_name, get_current_project
 from find_readings import get_esv_book, get_esv_content
 from trim import trim_file
-from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED, PROJECT_DOWNLOADS_DIR
+from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_DIR_EXPORT, PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED, PROJECT_DOWNLOADS_DIR, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS
 from pymongo import MongoClient
+from dataclasses import dataclass
 
 
 # client = MongoClient('mongodb://localhost:27017/')
@@ -165,6 +167,52 @@ def audio():
     with open(output_path, "rb") as f:
         return f.read()
 
+@dataclass
+class Reference:
+    book: str
+    chapter: int
+    verse: int
+    @property
+    def fmt_chapter(self):
+        return f"{self.book} {self.chapter}"
+    @property
+    def fmt_verse(self):
+        return f"{self.book} {self.chapter}:{self.verse}"
+
+@dataclass
+class Reading:
+    id: str
+    start_time: float
+    end_time: float
+    start_seg: int
+    end_seg: int
+    content: str
+    use: bool
+    volume: float
+    ref: Reference
+
+def create_verse_audio_file(config: dict[str,str], reading: Reading, track_number: int, bitrate: int=192) -> str:
+    project_name = config["name"]
+    ref = reading.ref
+    input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DOWNLOADS_DIR, f'{reading.id}.mp3')
+    output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{ref.fmt_verse} - {config["author"]}.mp3')
+
+    metadata_tags = [
+        '-metadata', f'title={ref.fmt_verse}',
+        '-metadata', f'track={track_number}',
+        '-metadata', f'album={config["book"]} - Verses',
+        '-metadata', f'artist={config["author"]}'
+    ]
+
+    if not os.path.exists(output_file):
+        command = ['ffmpeg', '-loglevel', 'error', '-i', input_file, '-ss', str(reading.start_time), '-to', str(reading.end_time), '-af', f'volume={reading.volume}', *metadata_tags, '-b:a', f'{bitrate}k', '-c:a', 'libmp3lame', output_file, "-y"]
+
+        # cmd = ['ffmpeg', '-loglevel', 'error', '-i', mp3_path, '-ss', start_time, '-to', end_time, '-af', f'volume={volume_level}', *metadata_tags, '-c:a', 'libmp3lame', output_path, '-y']
+        subprocess.run(command)
+    return output_file
+    # with open(output_file, "rb") as f:
+    #     return f.read()
+
 @app.route('/export', methods=['POST'])
 def export():
     """
@@ -172,8 +220,51 @@ def export():
     Parameters:
     (book_tree) -> .mp3 | .zip
     """
+    config = get_project_config()
+    project_name = get_current_project()
     # pro move, create symbolic link from selected .mp3 to exported new .mp3 (though modify the image if necessary)
-    pass
+
+    data: dict = request.json
+    book_tree = data["book_tree"]
+    export_type = data["export_type"]
+
+    reading_list = []
+    for chapter, references_to_readings in book_tree.items():
+        for reference, readings in references_to_readings.items():
+            ref = Reference(
+                re.search(r".*(?= \d+:)", reference)[0],
+                int(re.search(r"\d+(?=:)", reference)[0]),
+                int(re.search(r"\d+$", reference)[0])
+            )
+            for r in readings:
+                reading = Reading(
+                    id=r["id"],
+                    start_time=r["start_time"],
+                    end_time=r["end_time"],
+                    start_seg=r["start_seg"],
+                    end_seg=r["end_seg"],
+                    content=r["content"],
+                    use=r["use"],
+                    volume=r["volume"],
+                    ref=ref
+                )
+                if reading.use:
+                    reading_list.append(reading)
+
+    track_number = 1
+
+    def get_chapter_and_verse(s):
+        l = list(map( lambda i: int(i), re.findall(r'\d+', s)[:-1][-2:]))
+        return l
+
+    # sort mp3 files by chapter and verse
+    reading_list_sorted = sorted(reading_list, key= lambda r: [r.ref.chapter, r.ref.verse])
+
+    for reading in reading_list_sorted:
+        create_verse_audio_file(config, reading, track_number)
+        track_number += 1
+        break
+    return reply({})
 
 @app.route('/save', methods=['POST'])
 def save():
@@ -195,11 +286,12 @@ def save():
                 readings_json[reference].append({
                   "id": reading["id"],
                   "start_time": reading["start_time"],
-                  "start_seg": reading["start_seg"],
                   "end_time": reading["end_time"],
+                  "start_seg": reading["start_seg"],
                   "end_seg": reading["end_seg"],
                   "content": reading["content"],
                   "use": reading["use"],
+                  "volume": reading["volume"],
                 })
 
     readings_edited_path = os.path.join(PROJECT_DIR, get_current_project(), PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED)

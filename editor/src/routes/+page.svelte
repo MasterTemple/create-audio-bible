@@ -129,6 +129,19 @@
 		window.open(domain + `/file?id=${id}`);
 	}
 
+
+	/**
+	 * @returns {void}
+	 */
+	async function exportPrompt() {
+		// ill make a prompt later, for now export verses
+		const data = {
+			book_tree: $bookTree,
+			export_type: "verses"
+		};
+		const json = await json_post('/export', data);
+	}
+
 	/**
 	 * @returns {void}
 	 */
@@ -319,7 +332,7 @@
 					<!-- chapter list? -->
 					<div class="row">
 						<!-- make a drop-down to select export audio files in verses, chapters, or the whole book -->
-						<button>Export</button>
+						<button on:click={exportPrompt}>Export</button>
 						<button on:click={saveBookTree}>Save</button>
 					</div>
 				</div>
@@ -516,7 +529,7 @@
 
 	.collapsible {
 		cursor: pointer;
-		padding: 1rem;
+		padding: 10px;
 		border: none;
 		outline: none;
 		text-align: left;
