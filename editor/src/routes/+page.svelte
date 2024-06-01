@@ -13,6 +13,49 @@
 	const openReference = writable('');
 	const openReading = writable('');
 
+
+	/**
+	 * @param {string} reference
+	*/
+	function openThisReading(reference) {
+		// openReference.set(reference);
+		const readingId = document
+			.getElementById(asId(reference))
+			?.querySelector('div.content.reading')?.id;
+		// some references have no readings
+		if(readingId)
+			openReading.set(readingId);
+	}
+	/**
+	 * @param {string} reference
+	*/
+	function openNextReading(reference) {
+		const chapter = reference.replace(/:\d+$/, '');
+		const b = reference.match(/.*(?= \d+:)/g)[0];
+		const ch = reference.match(/\d+(?=:)/g)[0];
+		const v = reference.match(/\d+$/g)[0];
+		const nextReference = `${b} ${ch}:${parseInt(v) + 1}`;
+		const nextChapter = `${b} ${parseInt(ch) + 1}`;
+		const nextChapterReference = `${nextChapter}:1`;
+		// is in same chapter
+		if (Object.keys($bookTree[chapter]).find((r) => r == nextReference)) {
+			openReference.set(nextReference);
+			const nextReadingId = document
+				.getElementById(asId(nextReference))
+				?.querySelector('div.content.reading').id;
+			openReading.set(nextReadingId);
+		}
+		// is in same chapter
+		else if (Object.keys($bookTree).find((c) => c == nextChapter)) {
+			openChapter.set(nextChapter);
+			openReference.set(nextChapterReference);
+			const nextReadingId = document
+				.getElementById(asId(nextChapterReference))
+				?.querySelector('div.content.reading').id;
+			openReading.set(nextReadingId);
+		}
+	}
+
 	function centerElement(childElement) {
 		const mainContent = document.querySelector('div.main-content');
 		const childHeight = childElement.offsetHeight;
@@ -31,8 +74,28 @@
 	 */
 	async function scrollIntoMiddle(id) {
 		const element = document.getElementById(id);
+		console.log({id, element})
 		// console.log({ id, element });
 		if (element != null) {
+			const mainContent = document.querySelector('div.main-content');
+			const chaptersBefore = parseInt($openChapter.match(/\d+$/g)[0]);
+			const chapterSize = document.querySelector(".button-content.chapter").scrollHeight;
+
+			const versesBefore = parseInt($openReference.match(/\d+$/g)[0]) - 1;
+			const verseSize = document.querySelector(`#${asId($openChapter)} .button-content.verse`).scrollHeight;
+			// const verseSize = 70;
+
+			const readingsBefore = $bookTree[$openChapter][$openReference].findIndex((r) => r.sid == id);
+			const readingsSize = document.querySelector(`#${asId($openReference)} .button-content.reading`).scrollHeight;
+			// const readingsSize = 81;
+
+			const newScroll = (chaptersBefore * chapterSize) + (versesBefore * verseSize) + (readingsBefore * readingsSize);
+
+			// console.log({chaptersBefore, chapterSize, versesBefore, verseSize, readingsBefore, readingsSize, currentScroll: mainContent.scrollTop, newScroll: mainContent.scrollTop + newScroll, $openChapter, $openReference})
+			console.log({versesBefore, verseSize, readingsBefore, readingsSize, currentScroll: mainContent.scrollTop, newScroll: mainContent.scrollTop + newScroll})
+			mainContent.scrollTop = newScroll
+
+
 			// centerElement(element)
 			// document.querySelector("div.main-content").scrollTop += 150
 			// element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
@@ -216,30 +279,7 @@
 		// save selection?
 		saveBookTree();
 		// move on to next verse
-		const b = reading.reference.match(/.*(?= \d+:)/g)[0];
-		const ch = reading.reference.match(/\d+(?=:)/g)[0];
-		const v = reading.reference.match(/\d+$/g)[0];
-		const nextReference = `${b} ${ch}:${parseInt(v) + 1}`;
-		const nextChapter = `${b} ${parseInt(ch) + 1}`;
-		const nextChapterReference = `${nextChapter}:1`;
-		// is in same chapter
-		if (Object.keys($bookTree[chapter]).find((r) => r == nextReference)) {
-			openReference.set(nextReference);
-			const nextReadingId = document
-				.getElementById(asId(nextReference))
-				?.querySelector('div.content.reading').id;
-			openReading.set(nextReadingId);
-		}
-		// is in same chapter
-		else if (Object.keys($bookTree).find((c) => c == nextChapter)) {
-			openChapter.set(nextChapter);
-			openReference.set(nextChapterReference);
-			const nextReadingId = document
-				.getElementById(asId(nextChapterReference))
-				?.querySelector('div.content.reading').id;
-			openReading.set(nextReadingId);
-		}
-
+		openNextReading(reading.reference)
 		// // or
 		// // is in same chapter
 		// const chapterKeys = Object.keys($bookTree)
@@ -370,8 +410,13 @@
 		openChapter.subscribe((c) => {
 			openReference.set(c + ":1");
 		})
+		openReference.subscribe((r) => {
+			// scrollIntoMiddle()
+			openThisReading(r)
+		})
 		// when a new reading is opened
 		openReading.subscribe((r) => {
+			console.log({newOpenReading: r})
 			// stop all other audios/previous audio
 			Object.values($bookTree).forEach((referencesToReadings) => Object.values(referencesToReadings).forEach((readings) => readings.forEach((reading) => reading.audio.pause())))
 			// play audio of reading
@@ -382,6 +427,7 @@
 				audio.currentTime = 0;
 				audio.play()
 			}
+			openThisReading(r)
 			// scroll to new reading
 			scrollIntoMiddle(r);
 		});
