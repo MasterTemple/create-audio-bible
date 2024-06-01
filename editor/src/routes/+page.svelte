@@ -1,5 +1,4 @@
 <script>
-	import { read } from '$app/server';
 	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';
 
@@ -432,18 +431,16 @@
 	}
 
 	onMount(async () => {
-		document.addEventListener("keydown", (e) => {
-			if(e.key == " ") {
+		document.addEventListener('keydown', (e) => {
+			if (e.key == ' ') {
 				// pauseAllAudio()
 				const audio = document.querySelector(`#audio-${$openReading}`);
-				if(audio.paused)
-					audio.play();
-				else
-					audio.pause();
+				if (audio.paused) audio.play();
+				else audio.pause();
 
-				e.preventDefault()
+				e.preventDefault();
 			}
-		})
+		});
 		// get project name & config
 		await setConfig();
 
@@ -493,12 +490,12 @@
 					<div class="row">
 						<h1>{$config?.name}</h1>
 						<div class="col dropdown">
-							<button class="dropbtn" on:click={() => exportPrompt("book")}>Export</button>
-								<div class="dropdown-content">
-									<button on:click={() => exportPrompt('verses')}>Verses</button>
-									<button on:click={() => exportPrompt('chapters')}>Chapters</button>
-									<button on:click={() => exportPrompt('book')}>Book</button>
-								</div>
+							<button class="dropbtn" on:click={() => exportPrompt('book')}>Export</button>
+							<div class="dropdown-content">
+								<button on:click={() => exportPrompt('verses')}>Verses</button>
+								<button on:click={() => exportPrompt('chapters')}>Chapters</button>
+								<button on:click={() => exportPrompt('book')}>Book</button>
+							</div>
 						</div>
 					</div>
 					<!-- chapter list? -->
@@ -770,7 +767,7 @@
 		text-align: left;
 		width: 100%;
 		background-color: #f9f9f9;
-		border-bottom: 1px solid #ccc;
+		border: 1px solid #d9d9d9;
 		border-radius: 12px;
 	}
 
@@ -799,9 +796,12 @@
 		overflow-y: hidden;
 	}
 
+	/* .main-content > div  */
 	.main-content {
-		max-height: 95vh;
+		max-height: 65vh;
+		/* height: 100%; */
 		/* width: 80vw; */
+		/* min-height: 100%; */
 		overflow-y: scroll;
 		overflow-x: hidden;
 	}
@@ -1015,25 +1015,25 @@
 		background-color: var(--pg);
 	}
 
-  /* .dropdown { */
-  /*   position: absolute; */
-  /*   background-color: #f9f9f9; */
-  /*   min-width: 160px; */
-  /*   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2); */
-  /*   z-index: 1; */
-  /* } */
-  /**/
-  /* .dropdown button { */
-  /*   color: black; */
-  /*   padding: 12px 16px; */
-  /*   text-decoration: none; */
-  /*   display: block; */
-  /*   text-align: left; */
-  /* } */
-  /**/
-  /* .dropdown button:hover { */
-  /*   background-color: #ddd; */
-  /* } */
+	/* .dropdown { */
+	/*   position: absolute; */
+	/*   background-color: #f9f9f9; */
+	/*   min-width: 160px; */
+	/*   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2); */
+	/*   z-index: 1; */
+	/* } */
+	/**/
+	/* .dropdown button { */
+	/*   color: black; */
+	/*   padding: 12px 16px; */
+	/*   text-decoration: none; */
+	/*   display: block; */
+	/*   text-align: left; */
+	/* } */
+	/**/
+	/* .dropdown button:hover { */
+	/*   background-color: #ddd; */
+	/* } */
 
 	.dropbtn {
 	}
@@ -1051,12 +1051,38 @@
 		z-index: 1;
 	}
 
-
 	.dropdown-content button {
 		margin-top: 1ch;
 		/* margin-left: 0rem; */
 	}
 
-	.dropdown:hover .dropdown-content {display: block;}
+	.dropdown:hover .dropdown-content {
+		display: block;
+	}
 
+	/* width */
+	::-webkit-scrollbar {
+		width: 10px;
+	}
+
+	/* Track */
+	::-webkit-scrollbar-track {
+		background: #f1f1f1;
+		border-radius: 10px;
+	}
+
+	/* Handle */
+	::-webkit-scrollbar-thumb {
+		background: #888;
+		border-radius: 10px;
+	}
+
+	/* Handle on hover */
+	::-webkit-scrollbar-thumb:hover {
+		background: #555;
+	}
+	.main-content > .collapsible {
+		/* all: unset; */
+		/* overflow-y: scroll; */
+	}
 </style>
