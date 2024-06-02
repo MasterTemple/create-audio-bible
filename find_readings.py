@@ -267,15 +267,15 @@ def search_with_sequence_method(content: str) -> list[Reading]:
     for words in word_sets:
         for i in range(3, len(words) - 2):
             # ws = word set
-            ws1 = words[:i]
-            ws2 = words[i:]
+            ws1 = words[:i-1]
+            ws2 = words[1+i:]
             # r = readings
             readings1 = raw_sequence_match(ws1)
             readings2 = raw_sequence_match(ws2)
             readings = []
             for r1 in readings1:
                 for r2 in readings2:
-                    if r2.start_seg - r1.end_seg < 3:
+                    if r2.start_seg - r1.end_seg < 4:
                         # if i just join them, i miss what is in between
                         transcription = " ".join([segments[i]["content"] for i in range(r1.start_seg, r2.end_seg + 1)])
                         readings.append(
