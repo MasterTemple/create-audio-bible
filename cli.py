@@ -130,7 +130,8 @@ def main():
     elif command == "db":
         create_database()
     elif command == "find":
-        find_readings.find_all_readings()
+        # ultra_search = sys.argv[2] == "ultra"
+        find_readings.find_all_readings(True)
     elif command == "list":
         list_projects()
     elif command == "project":

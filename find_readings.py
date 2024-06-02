@@ -1,3 +1,4 @@
+from functools import lru_cache
 import pandas as pd
 import os
 import re
@@ -11,6 +12,7 @@ from vars import CURRENT_PROJECT_FILE, DATA_DIR, JSON_READINGS_FILE, PROJECT_DIR
 searches = {}
 segments = {}
 
+@lru_cache()
 def search(word):
     global searches
     if word in searches:
@@ -150,13 +152,19 @@ def find_readings(ref: Reference) -> list[Reading]:
 #     with open(file, "w") as f:
 #         f.write(json.dumps(data, indent=2))
 #
-
-def raw_sequence_match(words: list[str]) -> list[Reading]:
+# def raw_sequence_match(words: list[str], start_segs:set[str]=set()) -> list[Reading]:
+# def raw_sequence_match(words: list[str]) -> list[Reading]:
+@lru_cache()
+def cached_raw_sequence_match(content: str) -> list[Reading]:
+    words = create_words(content)
     stack = []
     for word in words:
         occurrences = search(word)
         if len(stack) == 0:
+            # if len(start_segs) == 0:
             stack.append(occurrences)
+            # else:
+            #     stack.append([o for o in occurrences if o not in start_segs])
         else:
             stack.append(
                 [
@@ -168,6 +176,45 @@ def raw_sequence_match(words: list[str]) -> list[Reading]:
     readings = []
     for end in stack[-1]:
         beg = end - len(words) + 1
+        # if beg in start_segs:
+        #     continue
+
+        transcription = " ".join([segments[i]["content"] for i in range(beg, end + 1)])
+        readings.append(
+            Reading(
+                segments[beg]["source"],
+                segments[beg]["start"],
+                segments[end]["end"],
+                beg,
+                end,
+                transcription
+            )
+        )
+    return readings
+
+
+def raw_sequence_match(words: list[str]) -> list[Reading]:
+    stack = []
+    for word in words:
+        occurrences = search(word)
+        if len(stack) == 0:
+            # if len(start_segs) == 0:
+            stack.append(occurrences)
+            # else:
+            #     stack.append([o for o in occurrences if o not in start_segs])
+        else:
+            stack.append(
+                [
+                    o for o in occurrences
+                    if o - 1 in stack[-1]
+                ]
+            )
+
+    readings = []
+    for end in stack[-1]:
+        beg = end - len(words) + 1
+        # if beg in start_segs:
+        #     continue
 
         transcription = " ".join([segments[i]["content"] for i in range(beg, end + 1)])
         readings.append(
@@ -239,6 +286,7 @@ def search_sequence(content: str):
         )
     return readings
 
+@lru_cache()
 def create_words(content: str) -> list[str]:
     return [
         word for word in
@@ -247,35 +295,50 @@ def create_words(content: str) -> list[str]:
     ]
 
 
-def search_with_sequence_method(content: str) -> list[Reading]:
+def search_with_sequence_method(content: str, ultra_search: bool = True) -> list[Reading]:
     word_sets = [
         # match when removing hyphen
-        create_words(re.sub(r"[^A-z0-9\s]", "", content.lower())),
+        # create_words(re.sub(r"[^A-z0-9\s]", "", content.lower())),
+        re.sub(r"[^A-z0-9\s]", "", content.lower()),
         # match when replacing hyphen with a space (splitting into 2 words)
-        create_words(re.sub(r"[^A-z0-9\s]", "", re.sub(r"[-—]", " ", content.lower()))),
+        # create_words(re.sub(r"[^A-z0-9\s]", "", re.sub(r"[-—]", " ", content.lower()))),
+        re.sub(r"[^A-z0-9\s]", "", re.sub(r"[-—]", " ", content.lower())),
         # match using hyphen to search
-        create_words(re.sub(r"[^A-z0-9\s\-]", "", content.lower())),
+        # create_words(re.sub(r"[^A-z0-9\s\-]", "", content.lower())),
+        re.sub(r"[^A-z0-9\s\-]", "", content.lower()),
     ]
+
+    all_readings = []
+    start_segs = set()
 
     # first pass with basic raw sequence matching
     for words in word_sets:
-        readings = raw_sequence_match(words)
-        if len(readings) > 0:
+        # readings = raw_sequence_match(words, start_segs)
+        readings = cached_raw_sequence_match(words)
+        if ultra_search:
+            for r in readings:
+                if r.start_seg not in start_segs:
+                    start_segs.add(r.start_seg)
+                    all_readings.append(r)
+        elif len(readings) > 0:
             return readings
 
     # split each set of words into 2 sets, see if they both can submatch and then if the end of the first and start of the second are close
-    for words in word_sets:
+    # for words in word_sets:
+    for content in word_sets:
+        words = create_words(content)
         for i in range(3, len(words) - 2):
             # ws = word set
             ws1 = words[:i-1]
             ws2 = words[1+i:]
             # r = readings
+            # readings1 = raw_sequence_match(ws1, start_segs)
             readings1 = raw_sequence_match(ws1)
             readings2 = raw_sequence_match(ws2)
             readings = []
             for r1 in readings1:
                 for r2 in readings2:
-                    if r2.start_seg - r1.end_seg < 4:
+                    if abs(r2.start_seg - r1.end_seg) < 4:
                         # if i just join them, i miss what is in between
                         transcription = " ".join([segments[i]["content"] for i in range(r1.start_seg, r2.end_seg + 1)])
                         readings.append(
@@ -289,14 +352,18 @@ def search_with_sequence_method(content: str) -> list[Reading]:
 
                             )
                         )
-            if len(readings) > 0:
+            if ultra_search and len(readings) > 0:
+                for r in readings:
+                    if r.start_seg not in start_segs:
+                        start_segs.add(r.start_seg)
+                        all_readings.append(r)
+                # break
+            elif len(readings) > 0:
                 return readings
+    # all_readings = list(set([r.__dict__ for r in all_readings]))
+    return all_readings
 
-
-
-    return []
-
-def find_all_readings():
+def find_all_readings(ultra_search=True):
     global searches
     global segments
     client = MongoClient('mongodb://localhost:27017/')
@@ -311,8 +378,10 @@ def find_all_readings():
 
     for ref in get_all_verses_and_content(book):
         full_ref = f"{ref.book} {ref.chapter}:{ref.verse}"
+        # if full_ref != "1 Peter 4:4":
+        #     continue
         print(f"Finding '{full_ref}'", end = "")
-        data[full_ref] = [reading.__dict__ for reading in search_with_sequence_method(ref.content)]
+        data[full_ref] = [reading.__dict__ for reading in search_with_sequence_method(ref.content, ultra_search)]
         print(f" - {len(data[full_ref])} results")
 
     project_name = get_current_project()
