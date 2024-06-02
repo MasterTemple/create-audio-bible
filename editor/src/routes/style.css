@@ -1,0 +1,415 @@
+
+:root {
+	--white: #ffffff;
+	--primary: #008cff;
+	--secondary: #0051ff;
+	--tertiary: #0031cf;
+	--action: #00af35;
+	--info: #a100c2;
+	--accent: #ff5e00;
+	--warning: #ff4a53;
+
+	--black: #000000;
+	--dark0: #111111;
+	--dark1: #1e2124;
+	--dark2: #282b30;
+	--dark3: #36393e;
+	--dark4: #424549;
+	--dark5: #525559;
+	--dark6: #626569;
+	--dark7: #727579;
+
+	--border-radius: 5px;
+
+	/*
+	h = hint
+	*/
+	--hy: #fff3bf;
+	--hr: #ffe3e3;
+	--hb: #d0ebff;
+	--hg: #e9fac8;
+
+	/*
+	p = pastel
+	*/
+	--py: #ffec99;
+	--pr: #ffc9c9;
+	--pb: #a5d8ff;
+	--pg: #b2f2bb;
+
+	--y: #ffd43b;
+	--r: #ff8787;
+	--b: #4dabf7;
+	--g: #69db7c;
+}
+
+body {
+	font-family: Arial, sans-serif;
+	margin: 20px;
+}
+
+.container {
+	max-width: 80vw;
+	max-height: 90vh;
+	/* overflow-y: scroll; */
+	margin: 0 auto;
+	border: 2px solid #ccc;
+	padding: 10px;
+	border-radius: 12px;
+}
+
+.header {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	text-align: center;
+	align-items: center;
+}
+
+.header h1 {
+	margin: 0;
+}
+
+.header .center .row,
+.header .center {
+	display: flex;
+	align-content: center;
+	justify-content: center;
+}
+
+.collapsible {
+	cursor: pointer;
+	margin: 10px;
+	border: none;
+	outline: none;
+	text-align: left;
+	width: 100%;
+	background-color: #f9f9f9;
+	border: 1px solid #d9d9d9;
+	border-radius: 12px;
+}
+
+.collapsible:hover {
+	background-color: var(-hb);
+}
+
+.collapsible:focus,
+.collapsible:active {
+	background-color: var(-pb);
+}
+
+.content {
+	padding: 0 2ch;
+	margin: 0 15px;
+	/* overflow: hidden; */
+	/* border-radius: 12px; */
+	margin-bottom: 10px;
+}
+.main-content,
+.content {
+	border-left: 3px solid #000;
+}
+
+.container {
+	overflow-y: hidden;
+}
+
+/* .main-content > div  */
+.main-content {
+	max-height: 65vh;
+	/* height: 100%; */
+	/* width: 80vw; */
+	/* min-height: 100%; */
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+.main-content,
+.content.chapter,
+.content.verse,
+.content.reading {
+	border-color: var(--pb);
+}
+
+.content {
+	display: none;
+}
+
+.content.active {
+	display: block;
+}
+
+/* .buttons { */
+/* 	margin-top: 10px; */
+/* } */
+/**/
+/* .buttons button { */
+/* 	margin-right: 5px; */
+/* } */
+
+.source,
+.timestamps,
+.volume {
+	margin-right: 10px;
+}
+
+/* button.chapter { */
+/* 	background: var(--hr); */
+/* } */
+/**/
+/* button.verse { */
+/* 	background: var(--hg); */
+/* } */
+/**/
+/* button.reading { */
+/* 	background: var(--hb); */
+/* } */
+
+.button-content {
+	display: flex;
+	align-items: center;
+	text-align: center;
+}
+
+.button-content > div > h3,
+.button-content > h4 {
+	margin-right: 1rem;
+}
+
+h3 {
+	/* text-align: left; */
+	width: 12ch;
+}
+
+.button-content.verse > div.col > h3,
+.button-content.verse > div.col > h4,
+.button-content.verse > div.col > p {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.verse-results {
+	margin-left: 2ch;
+	text-align: left;
+	color: var(--dark4);
+}
+
+.esv {
+}
+
+.row {
+	display: flex;
+}
+
+.col {
+	display: flex;
+	flex-direction: column;
+}
+
+.top-row,
+.bottom-row {
+	align-items: center;
+	padding-top: 1rem;
+	padding-bottom: 1rem;
+}
+
+.top-row > div,
+.top-row > div > input,
+.bottom-row > div > input {
+	padding: 1ch;
+	text-align: center;
+	align-content: center;
+	font-size: 1rem;
+}
+
+.top-row > div {
+}
+
+.top-row > div > input {
+	border-radius: 8px;
+	border: 1px solid black;
+	width: 9ch;
+}
+
+.bottom-row > div > input {
+	border-radius: 8px;
+	border: 1px solid black;
+	width: 22ch;
+	text-align: center;
+	align-content: center;
+	background: #e9ecef;
+}
+
+#save-button {
+	margin-left: 0rem;
+}
+
+button {
+	padding: 0.5rem;
+	font-size: 1rem;
+	margin-left: 1rem;
+	width: 12ch;
+	border-radius: 8px;
+}
+
+.reading-select-row,
+.reading-select-row > div.row,
+.verse-select-row,
+.verse-select-row > div.row,
+.chapter-select-row,
+.chapter-select-row > div.row {
+	margin-top: 0.25rem;
+	margin-bottom: 0.25rem;
+}
+
+button.chapter-select,
+button.verse-select,
+button.reading-select {
+	width: 4ch;
+	padding: 0.25rem;
+}
+
+button.chapter-select {
+	/* margin-left: ; */
+	font-size: 1.25rem;
+}
+
+button.verse-select,
+button.reading-select {
+	margin-left: 0.25rem;
+	/* font-size: 1.0rem; */
+}
+
+.no-readings-available {
+	background: var(--pr);
+}
+
+input:hover,
+input:focus,
+button:hover {
+	background: var(--hb);
+}
+
+.open-button {
+	background: var(--py);
+}
+
+.delete-button {
+	background: var(--pr);
+}
+
+.edit-button {
+	background: var(--pb);
+}
+
+.use-button {
+	background: var(--pg);
+}
+
+.open-button:hover {
+	background: var(--y);
+}
+
+.delete-button:hover {
+	background: var(--r);
+}
+
+.edit-button:hover {
+	background: var(--b);
+}
+
+.use-button:hover {
+	background: var(--g);
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+/* Firefox */
+input[type='number'] {
+	-moz-appearance: textfield;
+}
+
+.verse-selected,
+.chapter-selected,
+.reading-selected {
+	background-color: var(--pb);
+}
+.using-reading {
+	background-color: var(--pg);
+}
+
+/* .dropdown { */
+/*   position: absolute; */
+/*   background-color: #f9f9f9; */
+/*   min-width: 160px; */
+/*   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2); */
+/*   z-index: 1; */
+/* } */
+/**/
+/* .dropdown button { */
+/*   color: black; */
+/*   padding: 12px 16px; */
+/*   text-decoration: none; */
+/*   display: block; */
+/*   text-align: left; */
+/* } */
+/**/
+/* .dropdown button:hover { */
+/*   background-color: #ddd; */
+/* } */
+
+.dropbtn {
+}
+
+.dropdown {
+	position: relative;
+	display: inline-block;
+}
+
+.dropdown-content {
+	display: none;
+	position: absolute;
+	/* min-width: 160px; */
+	/* box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); */
+	z-index: 1;
+}
+
+.dropdown-content button {
+	margin-top: 1ch;
+	/* margin-left: 0rem; */
+}
+
+.dropdown:hover .dropdown-content {
+	display: block;
+}
+
+/* width */
+::-webkit-scrollbar {
+	width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+	background: #f1f1f1;
+	border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+	background: #888;
+	border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+	background: #555;
+}
+.main-content > .collapsible {
+	/* all: unset; */
+	/* overflow-y: scroll; */
+}
+
