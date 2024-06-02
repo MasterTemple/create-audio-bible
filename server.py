@@ -28,10 +28,10 @@ from pymongo import MongoClient
 from dataclasses import dataclass
 
 
-# client = MongoClient('mongodb://localhost:27017/')
-# db = client[get_db_name()]
-# searches = {s["word"]: s["segments"] for s in db["searches"].find({})}
-# segments = {s["id"]: s for s in db["segments"].find({})}
+client = MongoClient('mongodb://localhost:27017/')
+db = client[get_db_name()]
+searches = {s["word"]: s["segments"] for s in db["searches"].find({})}
+segments = {s["id"]: s for s in db["segments"].find({})}
 
 path = "ESV.sqlite"
 
@@ -52,6 +52,68 @@ def reply(data):
 #################
 # SERVER ROUTES #
 #################
+
+@app.route('/create_reading', methods=['POST'])
+def create_reading():
+    """
+    Description:
+        Create a reference given the source id, start time, stop time, and Bible reference
+    Parameters:
+        source_id: int
+        start_seg: int
+        end_seg: int
+    Returns:
+        word_list: list[str]
+    """
+    data: dict = request.json
+    word_list = []
+    source_id = data["source_id"]
+    start_time = data["start_time"]
+    end_time = data["end_time"]
+    reference = data["reference"]
+    start_seg = next((v for v in segments.values() if v['source'] == source_id and v['start'] >= start_time), None)['id']
+    end_seg = next((v for v in segments.values() if v['source'] == source_id and v['end'] >= end_time), None)['id']
+    for i in range(start_seg, end_seg + 1):
+        word_list.append(segments[i]['content'])
+    print(f"{word_list=}")
+    content = " ".join(word_list)
+    print(f"{content=}")
+    j = {
+        "id": source_id,
+        "start_time": start_time,
+        "end_time": end_time,
+        "start_seg": start_seg,
+        "end_seg": end_seg,
+        "content": content,
+        "use": True,
+        "volume": 1.0,
+    }
+    print(f"{j=}")
+    data = {"reading": j }
+    return reply(data)
+
+@app.route('/words', methods=['POST'])
+def words():
+    """
+    Description:
+        Get the word contents between 2 segments
+    Parameters:
+        source_id: int
+        start_seg: int
+        end_seg: int
+    Returns:
+        word_list: list[str]
+    """
+    data: dict = request.json
+    word_list = []
+    source_id = data["source_id"]
+    start_time = data["start_time"]
+    end_time = data["end_time"]
+    start_seg = next((v for v in segments.values() if v['source'] == source_id and v['start'] >= start_time), None)
+    end_seg = next((v for v in segments.values() if v['source'] == source_id and v['end'] >= end_time), None)
+    for i in range(start_seg['id'], end_seg['id'] + 1):
+        word_list.append(segments[i]['content'])
+    return reply({"words": word_list})
 
 @app.route('/verse', methods=['POST'])
 def verse():
