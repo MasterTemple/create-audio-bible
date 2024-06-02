@@ -230,7 +230,7 @@ export async function setBookTree() {
 		if (!oneIsUsed && tree[chapter][reference].length > 0) {
 			tree[chapter][reference][0].use = true;
 		}
-		if(tree[chapter][reference].length == 0) {
+		if(tree[chapter][reference].length == 0 || tree[chapter][reference][0].id == 0) {
 			tree[chapter][reference] = [
 				{
 					id: 0,

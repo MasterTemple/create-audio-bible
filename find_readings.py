@@ -126,6 +126,166 @@ def find_readings(ref: Reference) -> list[Reading]:
 
 
 
+# def find_all_readings():
+#     global searches
+#     global segments
+#     client = MongoClient('mongodb://localhost:27017/')
+#     db = client[get_db_name()]
+#     config = get_project_config()
+#
+#     searches = {s["word"]: s["segments"] for s in db["searches"].find({})}
+#     segments = {s["id"]: s for s in db["segments"].find({})}
+#
+#     data = {}
+#     book = config["book"]
+#
+#     for ref in get_all_verses_and_content(book):
+#         full_ref = f"{ref.book} {ref.chapter}:{ref.verse}"
+#         print(f"Finding '{full_ref}'", end = "")
+#         data[full_ref] = [reading.__dict__ for reading in find_readings(ref)]
+#         print(f" - {len(data[full_ref])} results")
+#
+#     project_name = get_current_project()
+#     file = os.path.join(PROJECT_DIR, project_name, PROJECT_JSON_DIR, JSON_READINGS_FILE)
+#     with open(file, "w") as f:
+#         f.write(json.dumps(data, indent=2))
+#
+
+def raw_sequence_match(words: list[str]):
+    stack = []
+    for word in words:
+        occurrences = search(word)
+        if len(stack) == 0:
+            stack.append(occurrences)
+        else:
+            stack.append(
+                [
+                    o for o in occurrences
+                    if o - 1 in stack[-1]
+                ]
+            )
+
+    readings = []
+    for end in stack[-1]:
+        beg = end - len(words) + 1
+
+        transcription = " ".join([segments[i]["content"] for i in range(beg, end + 1)])
+        readings.append(
+            Reading(
+                segments[beg]["source"],
+                segments[beg]["start"],
+                segments[end]["end"],
+                beg,
+                end,
+                transcription
+            )
+        )
+    return readings
+
+# def 
+
+def search_sequence(content: str):
+    hyphen_count = len(re.sub(r"[^\-]", "", content))
+    words = [
+        word for word in
+            re.split(r"\s",
+                re.sub(r"[^A-z0-9\s]", "",
+                    # re.sub(r"['’]", "",
+                    content.lower()
+                    # )#.replace("bondservant", "bond servant") # dont ask
+                )
+            )
+        if len(word) > 0
+    ]
+
+    stack = []
+    for word in words:
+        occurrences = search(word)
+        # print(f"{word}: {len(occurrences)}")
+        if len(stack) == 0:
+            stack.append(occurrences)
+        else:
+            # stack.append([o for o in occurrences if o - 1 in stack[-1]])
+            # stack.append([o for o in occurrences if o - 1 in stack[-1] or o - 2 in stack[-2]])
+            # stack.append([o for o in occurrences if any([o - i in stack[-i] for i in range(max(1, len(stack) - 3), len(stack) + 1)])])
+                # [o for o in occurrences if next((o - i in stack[-i] for i in range(max(1, len(stack) - 3), len(stack) + 1)), False)]
+            stack.append(
+                [
+                    o for o in occurrences
+                    if o - 1 in stack[-1]
+                    # if bool(
+                    #     next(
+                    #         (o - 1 in stack[-i] for i in range(1, hyphen_count + 2)),
+                    #          False
+                    #     )
+                    # )
+                ]
+            )
+
+    readings = []
+    for end in stack[-1]:
+        beg = end - len(words) + 1
+
+        transcription = " ".join([segments[i]["content"] for i in range(beg, end + 1)])
+        readings.append(
+            Reading(
+                segments[beg]["source"],
+                segments[beg]["start"],
+                segments[end]["end"],
+                beg,
+                end,
+                transcription
+            )
+        )
+    return readings
+
+def search_with_sequence_method(content: str) -> list[Reading]:
+    # match when removing hyphen
+    words = [
+        word for word in
+            re.split(r"\s",
+                re.sub(r"[^A-z0-9\s]", "",
+                    content.lower()
+                )
+            )
+        if len(word) > 0
+    ]
+    readings = raw_sequence_match(words)
+    if len(readings) > 0:
+        return readings
+
+    # match when replacing hyphen with a space (splitting into 2 words)
+    words = [
+        word for word in
+            re.split(r"\s",
+                re.sub(r"[^A-z0-9\s]", "",
+                    re.sub(r"[-—]", " ",
+                        content.lower()
+                   )
+                )
+            )
+        if len(word) > 0
+    ]
+    readings = raw_sequence_match(words)
+    if len(readings) > 0:
+        return readings
+
+    # match using hyphen to search
+    words = [
+        word for word in
+            re.split(r"\s",
+                re.sub(r"[^A-z0-9\s\-]", "",
+                    content.lower()
+                )
+            )
+        if len(word) > 0
+    ]
+    readings = raw_sequence_match(words)
+    if len(readings) > 0:
+        return readings
+
+    return []
+
 def find_all_readings():
     global searches
     global segments
@@ -142,7 +302,7 @@ def find_all_readings():
     for ref in get_all_verses_and_content(book):
         full_ref = f"{ref.book} {ref.chapter}:{ref.verse}"
         print(f"Finding '{full_ref}'", end = "")
-        data[full_ref] = [reading.__dict__ for reading in find_readings(ref)]
+        data[full_ref] = [reading.__dict__ for reading in search_with_sequence_method(ref.content)]
         print(f" - {len(data[full_ref])} results")
 
     project_name = get_current_project()
