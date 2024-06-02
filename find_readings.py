@@ -151,7 +151,7 @@ def find_readings(ref: Reference) -> list[Reading]:
 #         f.write(json.dumps(data, indent=2))
 #
 
-def raw_sequence_match(words: list[str]):
+def raw_sequence_match(words: list[str]) -> list[Reading]:
     stack = []
     for word in words:
         occurrences = search(word)
@@ -239,50 +239,60 @@ def search_sequence(content: str):
         )
     return readings
 
+def create_words(content: str) -> list[str]:
+    return [
+        word for word in
+            re.split(r"\s", content)
+        if len(word) > 0
+    ]
+
+
 def search_with_sequence_method(content: str) -> list[Reading]:
-    # match when removing hyphen
-    words = [
-        word for word in
-            re.split(r"\s",
-                re.sub(r"[^A-z0-9\s]", "",
-                    content.lower()
-                )
-            )
-        if len(word) > 0
+    word_sets = [
+        # match when removing hyphen
+        create_words(re.sub(r"[^A-z0-9\s]", "", content.lower())),
+        # match when replacing hyphen with a space (splitting into 2 words)
+        create_words(re.sub(r"[^A-z0-9\s]", "", re.sub(r"[-—]", " ", content.lower()))),
+        # match using hyphen to search
+        create_words(re.sub(r"[^A-z0-9\s\-]", "", content.lower())),
     ]
-    readings = raw_sequence_match(words)
-    if len(readings) > 0:
-        return readings
 
-    # match when replacing hyphen with a space (splitting into 2 words)
-    words = [
-        word for word in
-            re.split(r"\s",
-                re.sub(r"[^A-z0-9\s]", "",
-                    re.sub(r"[-—]", " ",
-                        content.lower()
-                   )
-                )
-            )
-        if len(word) > 0
-    ]
-    readings = raw_sequence_match(words)
-    if len(readings) > 0:
-        return readings
+    # first pass with basic raw sequence matching
+    for words in word_sets:
+        readings = raw_sequence_match(words)
+        if len(readings) > 0:
+            return readings
 
-    # match using hyphen to search
-    words = [
-        word for word in
-            re.split(r"\s",
-                re.sub(r"[^A-z0-9\s\-]", "",
-                    content.lower()
-                )
-            )
-        if len(word) > 0
-    ]
-    readings = raw_sequence_match(words)
-    if len(readings) > 0:
-        return readings
+    # split each set of words into 2 sets, see if they both can submatch and then if the end of the first and start of the second are close
+    for words in word_sets:
+        for i in range(3, len(words) - 2):
+            # ws = word set
+            ws1 = words[:i]
+            ws2 = words[i:]
+            # r = readings
+            readings1 = raw_sequence_match(ws1)
+            readings2 = raw_sequence_match(ws2)
+            readings = []
+            for r1 in readings1:
+                for r2 in readings2:
+                    if r2.start_seg - r1.end_seg < 3:
+                        # if i just join them, i miss what is in between
+                        transcription = " ".join([segments[i]["content"] for i in range(r1.start_seg, r2.end_seg + 1)])
+                        readings.append(
+                            Reading(
+                                r1.id,
+                                r1.start_time,
+                                r2.end_time,
+                                r1.start_seg,
+                                r2.end_seg,
+                                transcription
+
+                            )
+                        )
+            if len(readings) > 0:
+                return readings
+
+
 
     return []
 
