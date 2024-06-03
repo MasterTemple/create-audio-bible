@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from mutagen import mp3
 from mutagen.id3 import ID3, APIC, TIT2, TXXX, ID3NoHeaderError
 from mutagen.mp3 import MP3
 from vars import CURRENT_PROJECT_FILE, PROJECT_DIR, PROJECT_CONFIG_FILE_NAME
@@ -79,6 +80,8 @@ def read_source_data(mp3_file) -> SourceData:
     return None
 
 def embed_source_data(mp3_path: str, source_data: SourceData):
+    if not os.path.exists(mp3_path):
+        return
     try:
         audio = MP3(mp3_path, ID3=ID3)
     except ID3NoHeaderError:

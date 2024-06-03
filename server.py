@@ -306,6 +306,7 @@ def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: 
 
     subprocess.run(command)
     embed_source_data(output_file, source_data)
+    # add_album_art(output_file)
     return output_file
 
 def create_chapter_audio_file(cfg: dict[str,str], files_to_join: list[str], readings: list[Reading], overwrite:bool = True, bitrate: int=192) -> str:
@@ -426,8 +427,12 @@ def export():
         for chapter, readings in chapter_map.items():
             pass
             files_to_join = []
-            for reading in readings:
+
+            chapter_reading_sorted: list[Reading] = sorted(readings, key= lambda r: [r.ref.chapter, r.ref.verse])
+            for reading in chapter_reading_sorted:
                 output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{reading.ref.fmt_verse} - {cfg["author"]}.mp3')
+                if not os.path.exists(output_file):
+                    break
                 files_to_join.append(output_file)
             create_chapter_audio_file(cfg, files_to_join, readings, True)
 
@@ -437,6 +442,8 @@ def export():
         reading = reading_list_sorted[0]
         for i in range(1, chapter_count + 1):
             output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_CHAPTERS, f'{reading.ref.fmt_chapter} - {cfg["author"]}.mp3')
+            if not os.path.exists(output_file):
+                break
             files_to_join.append(output_file)
         create_book_audio_file(cfg, files_to_join, reading, True)
 
