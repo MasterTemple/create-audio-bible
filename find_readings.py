@@ -332,17 +332,19 @@ def bsmr(arr1: list[Reading], arr2: list[Reading], word_count: int, threshold: i
     return narr1, narr2
 
 def search_with_sequence_method(content: str, ultra_search: bool = True) -> list[Reading]:
-    word_sets = [
+    word_strs = [
         # match when removing hyphen
-        create_words(re.sub(r"[^A-z0-9\s]", "", content.lower())),
-        # re.sub(r"[^A-z0-9\s]", "", content.lower()),
+        # create_words(re.sub(r"[^A-z0-9\s]", "", content.lower())),
+        re.sub(r"[^A-z0-9\s]", "", content.lower()),
         # match when replacing hyphen with a space (splitting into 2 words)
-        create_words(re.sub(r"[^A-z0-9\s]", "", re.sub(r"[-—]", " ", content.lower()))),
-        # re.sub(r"[^A-z0-9\s]", "", re.sub(r"[-—]", " ", content.lower())),
+        # create_words(re.sub(r"[^A-z0-9\s]", "", re.sub(r"[-—]", " ", content.lower()))),
+        re.sub(r"[^A-z0-9\s]", "", re.sub(r"[-—]", " ", content.lower())),
         # match using hyphen to search
-        create_words(re.sub(r"[^A-z0-9\s\-]", "", content.lower())),
-        # re.sub(r"[^A-z0-9\s\-]", "", content.lower()),
+        # create_words(re.sub(r"[^A-z0-9\s\-]", "", content.lower())),
+        re.sub(r"[^A-z0-9\s\-]", "", content.lower()),
     ]
+
+    word_sets = [create_words(word_str) for word_str in list(set(word_strs))]
 
     all_readings = []
     start_segs = set()
