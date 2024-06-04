@@ -18,11 +18,12 @@
 	} from './functions';
 	import { writable } from 'svelte/store';
 	import ExtraReading from './ExtraReading.svelte';
+	import { onMount } from 'svelte';
 
 	export let reading = {};
 	export let i = 1;
 	export let openNextReading = () => {};
-	let extraReadings = writable(reading?.extra || []);
+	const extraReadings = writable(reading.extra);
 
 	function deleteChild(childReading) {
 		// console.log({childReading})
@@ -30,7 +31,12 @@
 		// console.log({$extraReadings})
 		let i = 0;
 		extraReadings.set(
-			$extraReadings.filter((er) => er.i != childReading.i).map((er) => er.i == i++)
+			$extraReadings.filter((er) => er.i != childReading.i).map((er) => {
+				return {
+					...er,
+					i: i++
+				}
+			})
 		);
 		reading.extra = $extraReadings;
 	}
@@ -49,12 +55,18 @@
 	}
 
 	extraReadings.subscribe((ers) => {
+		console.log({ers, extra: reading.extra})
+		// update mergedUrl
 		ers = [reading, ...ers]
 		const fileIds = ers.map((e) => e.id).join(",")
 		const startTimes = ers.map((e) => e.start_time).join(",")
 		const endTimes = ers.map((e) => e.end_time).join(",")
 		const volumes = ers.map((e) => e.volume).join(",")
 		reading.mergedUrl = `${domain}/merged_audio?file_ids=${fileIds}&start_times=${startTimes}&end_times=${endTimes}&volumes=${volumes}`;
+	})
+
+	onMount(() => {
+		extraReadings.set(reading.extra)
 	})
 
 	// console.log({reading})
@@ -76,7 +88,7 @@
 	style="display:{$openReading == reading.sid ? 'block' : 'none'};"
 >
 	<div class="top-row row">
-		{#if reading?.extra?.length != 0}
+		{#if $extraReadings.length != 0}
 			<audio id={'audio-' + reading.sid} preload="none" bind:this={reading.audio} controls>
 				<!-- <source src={audioUrl(reading)} type="audio/mpeg" /> -->
 				<source src={reading.url} type="audio/mpeg" />
@@ -116,7 +128,7 @@
 			Source:
 			<input type="text" bind:value={reading.id} on:input={() => {
 					reading.url = audioUrl(reading);
-					updateChild(reading)
+					// updateChild(reading)
 			}}/>
 		</div>
 		<button
@@ -126,7 +138,10 @@
 				reading.extra.push({
 					...reading,
 					i: $extraReadings.length,
-					extra: undefined
+					extra: undefined,
+					audio: undefined,
+					mergedAudio: undefined,
+					mergedUrl: undefined,
 				});
 				extraReadings.set(reading.extra);
 			}}>Add</button
@@ -134,16 +149,16 @@
 	</div>
 	<div class="middle-row col">
 		{#each $extraReadings as extraReading}
-			<ExtraReading reading={extraReading} {extraReadings} {deleteChild} />
+			<ExtraReading reading={extraReading} {deleteChild} {updateChild} />
 		{/each}
 	</div>
 	<div class="bottom-row row">
-		{#if reading?.extra?.length == 0}
+		{#if $extraReadings.length == 0}
 			<audio id={'audio-' + reading.sid} preload="none" bind:this={reading.audio} controls>
 				<source src={reading.url} type="audio/mpeg" />
 			</audio>
 		{:else}
-			<audio id={'audio-' + reading.sid} preload="none" bind:this={reading.mergedAudio} controls>
+			<audio id={'audio-' + reading.sid + '-merged'} preload="none" bind:this={reading.mergedAudio} controls>
 				<source src={reading.mergedUrl} type="audio/mpeg" />
 			</audio>
 		{/if}
@@ -151,7 +166,13 @@
 			>Open File</button
 		>
 		<button class="delete-button" on:click={() => deleteReading(reading.id)}>Delete</button>
-		<button class="edit-button" on:click={() => editReading(reading)}>Apply</button>
+		<button class="edit-button" on:click={() => {
+			// edit reading
+			editReading(reading)
+			// edit child readings
+			// reading.extra.forEach((r) => editReading(r))
+			$extraReadings.forEach((er) => er.audio.load())
+		}}>Apply</button>
 		<!-- <button class="use-button" on:click={() => reading.use = true}>{reading.use ? "Using": "Use"}</button> -->
 		<button
 			class="use-button"

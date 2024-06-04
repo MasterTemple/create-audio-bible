@@ -115,7 +115,7 @@ bookTree.subscribe(async(bt) => {
  */
 export async function saveBookTree() {
 	const data = { book_tree };
-	console.log({data})
+	// console.log({data})
 	const json = await json_post('/save', data);
 }
 

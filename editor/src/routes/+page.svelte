@@ -81,7 +81,7 @@
 				chaptersBefore * chapterSize + versesBefore * verseSize + readingsBefore * readingsSize;
 
 			const interval = setInterval(() => {
-				console.log(document.querySelector('.main-content').scrollTop);
+				// console.log(document.querySelector('.main-content').scrollTop);
 				mainContent.scrollTop = newScroll;
 			}, 50);
 			setTimeout(() => {
@@ -117,7 +117,9 @@
 		document.addEventListener('keydown', (e) => {
 			if (e.key == ' ') {
 				// pauseAllAudio()
-				const audio = document.querySelector(`#audio-${$openReading}`);
+				let audio = document.querySelector(`#audio-${$openReading}-merged`);
+				if(!audio)
+					audio = document.querySelector(`#audio-${$openReading}`);
 				if (audio.paused) audio.play();
 				else audio.pause();
 
@@ -142,11 +144,14 @@
 		});
 		// when a new reading is opened
 		openReading.subscribe((r) => {
-			console.log({ newOpenReading: r });
+			// console.log({ newOpenReading: r });
 			// stop all other audios/previous audio
 			pauseAllAudio();
 			// play audio of reading
-			const audio = document.querySelector(`#audio-${r}`);
+			// const audio = document.querySelector(`#audio-${r}`);
+			let audio = document.querySelector(`#audio-${r}-merged`);
+			if(!audio)
+				audio = document.querySelector(`#audio-${r}`);
 			// restart audio from beginning
 			const autoPlay = true;
 			if (audio && autoPlay) {
