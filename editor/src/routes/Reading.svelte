@@ -1,5 +1,5 @@
 <script>
-	import { openChapter, openReference, openReading } from './stores';
+	import { openChapter, openReference, openReading, bookTree } from './stores';
 	import {
 		asId,
 		download_post,
@@ -52,6 +52,8 @@
 			})
 		);
 		reading.extra = $extraReadings;
+		$bookTree[$openChapter][$openReference] = [reading]
+		saveBookTree()
 	}
 
 	extraReadings.subscribe((ers) => {

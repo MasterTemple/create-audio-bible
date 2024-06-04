@@ -281,11 +281,11 @@
 									style="display:{$openReference == reference ? 'block' : 'none'};"
 								>
 									{#each readings as reading, i}
-										{#if reading.blank == true}
-											<EditableReading reading={reading} i={i} openNextReading={openNextReading}/>
-										{:else}
+										<!-- {#if reading.blank == true} -->
+										<!-- 	<EditableReading reading={reading} i={i} openNextReading={openNextReading}/> -->
+										<!-- {:else} -->
 											<Reading reading={reading} i={i} openNextReading={openNextReading}/>
-										{/if}
+										<!-- {/if} -->
 									{/each}
 								</div>
 							{/each}

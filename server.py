@@ -21,7 +21,7 @@ import subprocess
 from io import BytesIO
 from flask_cors import CORS
 import json
-from functions import add_album_art, add_source_data, get_project_config, get_db_name, get_current_project, merge_files, read_source_data, SourceData, embed_source_data, extract_source_data
+from functions import add_album_art, add_meta_data, add_source_data, get_project_config, get_db_name, get_current_project, merge_files, read_source_data, SourceData, embed_source_data, extract_source_data
 from find_readings import get_esv_book, get_esv_content
 from trim import trim_file
 from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED, PROJECT_DOWNLOADS_DIR, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS
@@ -76,9 +76,9 @@ def create_reading():
     end_seg = next((v for v in segments.values() if v['source'] == source_id and v['end'] >= end_time), None)['id']
     for i in range(start_seg, end_seg + 1):
         word_list.append(segments[i]['content'])
-    print(f"{word_list=}")
+    # print(f"{word_list=}")
     content = " ".join(word_list)
-    print(f"{content=}")
+    # print(f"{content=}")
     j = {
         "id": source_id,
         "start_time": start_time,
@@ -321,8 +321,8 @@ def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: 
     source_data = SourceData(reading.id, reading.start_time, reading.end_time, reading.volume, extra_data)
     if os.path.exists(output_file):
         previous_data = extract_source_data(output_file)
-        print(f"{previous_data=}")
-        print(f"{source_data=}")
+        # print(f"{previous_data=}")
+        # print(f"{source_data=}")
         if previous_data == source_data:
             print(f"Skipping '{ref.fmt_verse}'")
             return output_file
@@ -337,7 +337,7 @@ def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: 
     ]
 
     cover_image = os.path.join(os.path.abspath("."), cfg["cover_image"])
-    print(cover_image)
+    # print(cover_image)
     image_tags = [
         '-i', cover_image,
         '-map', '0:0',  # Map input audio stream
@@ -473,17 +473,26 @@ def export():
     reading_list_sorted: list[Reading] = sorted(reading_list, key= lambda r: [r.ref.chapter, r.ref.verse])
 
     for reading in reading_list_sorted:
+        # if it has extra, i hope it is already trimmed
         if len(reading.extra) > 0:
             extra_data = ""
-            for extra_reading in reading.extra:
+            # get 
+            all_readings = [reading.__dict__]
+            all_readings.extend(reading.extra)
+            for extra_reading in all_readings:
                 extra_data += f"{extra_reading['id']},{extra_reading['start_time']},{extra_reading['end_time']},{extra_reading['volume']};"
+            # copy file
             input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_AUDIO, f'{extra_data[:-1]}.mp3')
             output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{reading.ref.fmt_verse} - {cfg["author"]}.mp3')
-            shutil.copyfile(input_file, output_file)
+            with open(input_file, "rb") as ifb:
+                with open(output_file, "wb") as ofb:
+                    ofb.write(ifb.read())
+            add_album_art(output_file)
+            add_meta_data(reading.ref.fmt_verse, f'{cfg["book"]} - Verses', cfg["author"], track_number, output_file)
         else:
             create_verse_audio_file(cfg, reading, track_number, False)
         track_number += 1
-        return
+        # return
 
     if export_type == "chapters" or export_type == "book":
         chapter_count = max([r.ref.chapter for r in reading_list_sorted])

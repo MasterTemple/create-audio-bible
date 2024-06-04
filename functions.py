@@ -117,7 +117,7 @@ def extract_source_data(mp3_path: str) -> SourceData:
 def merge_files(source_data: SourceData, files: list[str], bitrate=192) -> str:
     project_name = get_current_project()
     output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_AUDIO, f'{source_data.extra}.mp3')
-    print(output_file)
+    # print(output_file)
     if os.path.exists(output_file):
         previous_data = extract_source_data(output_file)
         if previous_data == source_data:
@@ -125,7 +125,7 @@ def merge_files(source_data: SourceData, files: list[str], bitrate=192) -> str:
 
     print(f"Creating Merge")
 
-    temp = f'{source_data}.txt'
+    temp = f'{source_data.extra}.txt'
     with open(temp, 'w') as f:
         for file in files:
             f.write(f"file '{file}'\n")
@@ -135,3 +135,16 @@ def merge_files(source_data: SourceData, files: list[str], bitrate=192) -> str:
     # add_album_art(output_file)
     os.remove(temp)
     return output_file
+
+def add_meta_data(title: str, album: str, author: str, track_number: int, file: str):
+    input_file = file + ".temp"
+    os.rename(file, input_file)
+    metadata_tags = [
+        '-metadata', f'title={title}',
+        '-metadata', f'track={track_number}',
+        '-metadata', f'album={album}',
+        '-metadata', f'artist={author}'
+    ]
+    ffmpeg_command = ['ffmpeg', '-i', input_file, *metadata_tags, '-codec', 'copy', file, "-y"]
+    os.remove(input_file)
+    subprocess.run(ffmpeg_command, check=True)
