@@ -20,7 +20,7 @@ import subprocess
 from io import BytesIO
 from flask_cors import CORS
 import json
-from functions import add_album_art, add_source_data, get_project_config, get_db_name, get_current_project, read_source_data, SourceData, embed_source_data, extract_source_data
+from functions import add_album_art, add_source_data, get_project_config, get_db_name, get_current_project, merge_files, read_source_data, SourceData, embed_source_data, extract_source_data
 from find_readings import get_esv_book, get_esv_content
 from trim import trim_file
 from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_DIR_EXPORT, PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED, PROJECT_DOWNLOADS_DIR, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS
@@ -230,6 +230,48 @@ def audio():
     with open(output_path, "rb") as f:
         return f.read()
 
+
+@app.route('/merged_audio', methods=['GET'])
+def merged_audio():
+    """
+    Description:
+    Parameters:
+        file_id: str
+        start_time: float
+        end_time: float
+        volume: float = 1
+    Returns:
+        file.mp3
+    """
+    project_name = get_current_project()
+
+    file_ids = request.args.get("file_ids").split(",")
+    start_times = request.args.get("start_times").split(",")
+    end_times = request.args.get("end_times").split(",")
+    volumes = request.args.get("volumes").split(",")
+    # extra_data = request.args.get("file_ids") + ";" + request.args.get("start_times") + ";" + request.args.get("end_times") + ";" + request.args.get("volumes")
+
+    source_data: SourceData = None
+    extra_data = ""
+    output_paths = []
+    for file_id, start_time, end_time, volume in zip(file_ids, start_times, end_times, volumes):
+
+        if source_data == None:
+            source_data = SourceData(file_id, float(start_time), float(end_time), float(volume))
+        output_path = trim_file(
+            project_name,
+            file_id,
+            float(start_time),
+            float(end_time),
+            float(volume)
+        )
+        extra_data += f"{file_id},{start_time},{end_time},{volume};"
+        output_paths.append(output_path)
+    source_data.extra = extra_data[:-1]
+    merged_path = merge_files(source_data, output_paths)
+    with open(merged_path, "rb") as f:
+        return f.read()
+
 @dataclass
 class Reference:
     book: str
@@ -329,10 +371,8 @@ def create_chapter_audio_file(cfg: dict[str,str], files_to_join: list[str], read
         if previous_data == source_data:
             print(f"Skipping '{ref.fmt_chapter}'")
             return output_file
-    print(f"Creating '{ref.fmt_chapter}'")
 
-    if os.path.exists(output_file) and not overwrite:
-        return output_file
+    print(f"Creating '{ref.fmt_chapter}'")
 
     with open('list.txt', 'w') as f:
         for file in files_to_join:
@@ -496,6 +536,13 @@ def save():
         for reference, readings in references_to_readings.items():
             readings_json[reference] = []
             for reading in readings:
+                extra_readings = []
+                if "extra" in reading:
+                    extra_readings = reading["extra"]
+                    for er in extra_readings:
+                        for key in ["audio", "reference", "url", "use", "sid"]:
+                            if key in er:
+                                del er[key]
                 readings_json[reference].append({
                   "id": reading["id"],
                   "start_time": reading["start_time"],
@@ -505,6 +552,7 @@ def save():
                   "content": reading["content"],
                   "use": reading["use"],
                   "volume": reading["volume"],
+                  "extra": extra_readings
                 })
 
     readings_edited_path = os.path.join(PROJECT_DIR, get_current_project(), PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED)

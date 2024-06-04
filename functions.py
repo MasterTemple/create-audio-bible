@@ -1,8 +1,9 @@
 from dataclasses import dataclass
+import subprocess
 from mutagen import mp3
 from mutagen.id3 import ID3, APIC, TIT2, TXXX, ID3NoHeaderError
 from mutagen.mp3 import MP3
-from vars import CURRENT_PROJECT_FILE, PROJECT_DIR, PROJECT_CONFIG_FILE_NAME
+from vars import CURRENT_PROJECT_FILE, PROJECT_DIR, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR_AUDIO
 import re
 import os
 import json
@@ -44,6 +45,7 @@ class SourceData:
     start_time: float
     end_time: float
     volume: float
+    extra: str = ""
 
 def add_source_data(mp3_file: str, sd: SourceData):
     """
@@ -54,7 +56,7 @@ def add_source_data(mp3_file: str, sd: SourceData):
       note: str - The note to add.
     """
     audio = ID3(mp3_file)
-    audio.add(TIT2(text=f"source=[{sd.id},{sd.start_time},{sd.end_time},{sd.volume}]"))
+    audio.add(TIT2(text=f"source=[{sd.id},{sd.start_time},{sd.end_time},{sd.volume},{json.dumps(extra)}]"))
     audio.save()
 
 def read_source_data(mp3_file) -> SourceData:
@@ -75,7 +77,8 @@ def read_source_data(mp3_file) -> SourceData:
                     elements[0],
                     float(elements[1]),
                     float(elements[2]),
-                    float(elements[3])
+                    float(elements[3]),
+                    elements[4],
                 )
     return None
 
@@ -109,3 +112,28 @@ def extract_source_data(mp3_path: str) -> SourceData:
         return SourceData(**source_data_dict)
     else:
         raise ValueError("No SourceData found in the given MP3 file.")
+
+def merge_files(source_data: SourceData, files: list[str], bitrate=192) -> str:
+    project_name = get_current_project()
+    print(PROJECT_DIR)
+    print(project_name)
+    print(PROJECT_DIR_AUDIO)
+    print(source_data.extra)
+    output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_AUDIO, f'{source_data.extra}.mp3')
+    print(output_file)
+    if os.path.exists(output_file):
+        previous_data = extract_source_data(output_file)
+        if previous_data == source_data:
+            return output_file
+
+    print(f"Creating Merge")
+
+    with open('list.txt', 'w') as f:
+        for file in files:
+            f.write(f"file '{file}'\n")
+
+    subprocess.run(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c', 'copy', '-b:a', f'{bitrate}k', '-c:a', 'libmp3lame', output_file, '-y'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    embed_source_data(output_file, source_data)
+    # add_album_art(output_file)
+    os.remove('list.txt')
+    return output_file

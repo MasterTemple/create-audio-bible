@@ -213,6 +213,7 @@ h3 {
 	padding-bottom: 1rem;
 }
 
+div.source > input,
 .top-row > div,
 .top-row > div > input,
 .bottom-row > div > input {
@@ -231,7 +232,7 @@ h3 {
 	width: 9ch;
 }
 
-.bottom-row > div > input {
+div.source > input {
 	border-radius: 8px;
 	border: 1px solid black;
 	width: 22ch;
@@ -294,6 +295,7 @@ button:hover {
 	background: var(--py);
 }
 
+.remove-button,
 .delete-button {
 	background: var(--pr);
 }
@@ -302,6 +304,7 @@ button:hover {
 	background: var(--pb);
 }
 
+.add-button,
 .use-button {
 	background: var(--pg);
 }
@@ -310,6 +313,7 @@ button:hover {
 	background: var(--y);
 }
 
+.remove-button:hover,
 .delete-button:hover {
 	background: var(--r);
 }
@@ -318,6 +322,7 @@ button:hover {
 	background: var(--b);
 }
 
+.add-button:hover,
 .use-button:hover {
 	background: var(--g);
 }

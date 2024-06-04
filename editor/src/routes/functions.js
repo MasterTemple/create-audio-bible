@@ -115,6 +115,7 @@ bookTree.subscribe(async(bt) => {
  */
 export async function saveBookTree() {
 	const data = { book_tree };
+	console.log({data})
 	const json = await json_post('/save', data);
 }
 
@@ -126,9 +127,15 @@ export async function saveBookTree() {
  */
 export function editReading(reading) {
 	// console.log({ reading });
-	reading.audio.preload = 'auto';
-	reading.audio.autoplay = true;
-	reading.audio.load();
+	let audio = reading.audio
+	if(reading?.mergedAudio) {
+		audio.preload = 'auto';
+		audio.autoplay = false;
+		audio = reading.mergedAudio
+	}
+	audio.preload = 'auto';
+	audio.autoplay = true;
+	audio.load();
 	// reading.audio.load();
 	saveBookTree();
 }
@@ -224,7 +231,8 @@ export async function setBookTree() {
 				url: audioUrl(r),
 				volume: r.volume || 1.0,
 				use: r.use || false,
-				sid: `${r.id}-${r.start_seg}-${r.end_seg}`
+				sid: `${r.id}-${r.start_seg}-${r.end_seg}`,
+				extra: r.extra || [],
 			};
 		});
 		if (!oneIsUsed && tree[chapter][reference].length > 0) {
@@ -244,7 +252,8 @@ export async function setBookTree() {
 					volume: 1.0,
 					use: true,
 					sid: `0-0-0`,
-					blank: true
+					blank: true,
+					extra: []
 				}
 			]
 		}
