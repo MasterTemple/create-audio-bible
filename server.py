@@ -9,6 +9,7 @@ Endpoints:
     POST: /save(book_tree) -> None
 """
 
+import shutil
 import zipfile
 import re
 from functools import lru_cache
@@ -304,21 +305,24 @@ def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: 
     input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DOWNLOADS_DIR, f'{reading.id}.mp3')
     # if has children/extra/multiple audio files
     extra_data = ""
-    if len(reading.extra) > 0:
-        start_time = 0.0
-        end_time = 0.0
-        for extra_reading in reading.extra:
-            extra_data += f"{extra_reading['id']},{extra_reading['start_time']},{extra_reading['end_time']},{extra_reading['volume']};"
-            end_time += float(extra_reading['end_time']) - float(extra_reading['start_time'])
-        input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_AUDIO, f'{extra_data[:-1]}.mp3')
-        reading.start_time = start_time
-        reading.end_time = end_time
-
+    # print(reading)
+    # if len(reading.extra) > 0:
+    #     start_time = 0.0
+    #     end_time = 0.0
+    #     for extra_reading in reading.extra:
+    #         extra_data += f"{extra_reading['id']},{extra_reading['start_time']},{extra_reading['end_time']},{extra_reading['volume']};"
+    #         end_time += float(extra_reading['end_time']) - float(extra_reading['start_time'])
+    #     input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_AUDIO, f'{extra_data[:-1]}.mp3')
+    #     reading.start_time = start_time
+    #     reading.end_time = end_time
+    #
     output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{ref.fmt_verse} - {cfg["author"]}.mp3')
 
     source_data = SourceData(reading.id, reading.start_time, reading.end_time, reading.volume, extra_data)
     if os.path.exists(output_file):
         previous_data = extract_source_data(output_file)
+        print(f"{previous_data=}")
+        print(f"{source_data=}")
         if previous_data == source_data:
             print(f"Skipping '{ref.fmt_verse}'")
             return output_file
@@ -469,8 +473,17 @@ def export():
     reading_list_sorted: list[Reading] = sorted(reading_list, key= lambda r: [r.ref.chapter, r.ref.verse])
 
     for reading in reading_list_sorted:
-        create_verse_audio_file(cfg, reading, track_number, False)
+        if len(reading.extra) > 0:
+            extra_data = ""
+            for extra_reading in reading.extra:
+                extra_data += f"{extra_reading['id']},{extra_reading['start_time']},{extra_reading['end_time']},{extra_reading['volume']};"
+            input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_AUDIO, f'{extra_data[:-1]}.mp3')
+            output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{reading.ref.fmt_verse} - {cfg["author"]}.mp3')
+            shutil.copyfile(input_file, output_file)
+        else:
+            create_verse_audio_file(cfg, reading, track_number, False)
         track_number += 1
+        return
 
     if export_type == "chapters" or export_type == "book":
         chapter_count = max([r.ref.chapter for r in reading_list_sorted])
