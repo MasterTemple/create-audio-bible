@@ -348,7 +348,7 @@ def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: 
 
     subprocess.run(command)
     embed_source_data(output_file, source_data)
-    # add_album_art(output_file)
+    add_album_art(output_file)
     return output_file
 
 def create_chapter_audio_file(cfg: dict[str,str], files_to_join: list[str], readings: list[Reading], overwrite:bool = True, bitrate: int=192) -> str:
@@ -387,7 +387,7 @@ def create_chapter_audio_file(cfg: dict[str,str], files_to_join: list[str], read
 
     subprocess.run(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c', 'copy', *metadata_tags, '-b:a', f'{bitrate}k', '-c:a', 'libmp3lame', output_file, '-y'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     embed_source_data(output_file, source_data)
-    # add_album_art(output_file)
+    add_album_art(output_file)
     os.remove('list.txt')
 
 def create_book_audio_file(cfg: dict[str,str], files_to_join: list[str], reading: Reading, overwrite:bool = True, bitrate: int=192) -> str:
@@ -407,7 +407,7 @@ def create_book_audio_file(cfg: dict[str,str], files_to_join: list[str], reading
     ]
 
     subprocess.run(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c', 'copy', *metadata_tags, '-b:a', f'{bitrate}k', '-c:a', 'libmp3lame', output_file, '-y'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    # add_album_art(output_file)
+    add_album_art(output_file)
     os.remove('list.txt')
 
 @app.route('/export', methods=['POST'])

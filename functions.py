@@ -22,7 +22,8 @@ def get_db_name() -> str:
     return re.sub(" ", "_", get_current_project())
 
 
-def add_album_art(input_file: str, cover_image: str):
+def add_album_art(input_file: str):
+    cover_image = get_project_config()["cover_image"]
     audio = ID3(input_file)
     with open(cover_image, 'rb') as image_file:
         image_data = image_file.read()
