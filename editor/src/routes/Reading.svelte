@@ -55,7 +55,7 @@
 	}
 
 	extraReadings.subscribe((ers) => {
-		console.log({ers, extra: reading.extra})
+		// console.log({ers, extra: reading.extra})
 		// update mergedUrl
 		ers = [reading, ...ers]
 		const fileIds = ers.map((e) => e.id).join(",")
@@ -149,7 +149,7 @@
 	</div>
 	<div class="middle-row col">
 		{#each $extraReadings as extraReading}
-			<ExtraReading reading={extraReading} {deleteChild} {updateChild} />
+			<ExtraReading reading={extraReading} {deleteChild} {updateChild} sid={reading.sid}/>
 		{/each}
 	</div>
 	<div class="bottom-row row">
@@ -171,7 +171,7 @@
 			editReading(reading)
 			// edit child readings
 			// reading.extra.forEach((r) => editReading(r))
-			$extraReadings.forEach((er) => er.audio.load())
+			$extraReadings.forEach((er) => er.audio.preload = "auto")
 		}}>Apply</button>
 		<!-- <button class="use-button" on:click={() => reading.use = true}>{reading.use ? "Using": "Use"}</button> -->
 		<button
