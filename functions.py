@@ -116,10 +116,6 @@ def extract_source_data(mp3_path: str) -> SourceData:
 
 def merge_files(source_data: SourceData, files: list[str], bitrate=192) -> str:
     project_name = get_current_project()
-    # print(PROJECT_DIR)
-    # print(project_name)
-    # print(PROJECT_DIR_AUDIO)
-    # print(source_data.extra)
     output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_AUDIO, f'{source_data.extra}.mp3')
     print(output_file)
     if os.path.exists(output_file):
@@ -137,5 +133,5 @@ def merge_files(source_data: SourceData, files: list[str], bitrate=192) -> str:
     subprocess.run(['ffmpeg', '-f', 'concat', '-safe', '0', '-i', temp, '-c', 'copy', '-b:a', f'{bitrate}k', '-c:a', 'libmp3lame', output_file, '-y'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     embed_source_data(output_file, source_data)
     # add_album_art(output_file)
-    os.remove('list.txt')
+    os.remove(temp)
     return output_file

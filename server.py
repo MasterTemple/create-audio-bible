@@ -23,9 +23,9 @@ import json
 from functions import add_album_art, add_source_data, get_project_config, get_db_name, get_current_project, merge_files, read_source_data, SourceData, embed_source_data, extract_source_data
 from find_readings import get_esv_book, get_esv_content
 from trim import trim_file
-from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_DIR_EXPORT, PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED, PROJECT_DOWNLOADS_DIR, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS
+from vars import JSON_READINGS_FILE, PROJECT_CONFIG_FILE_NAME, PROJECT_DIR, PROJECT_DIR_AUDIO, PROJECT_DIR_EXPORT, PROJECT_JSON_DIR, JSON_READINGS_FILE_EDITED, PROJECT_DOWNLOADS_DIR, PROJECT_DIR_EXPORT_VERSES, PROJECT_DIR_EXPORT_CHAPTERS
 from pymongo import MongoClient
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 client = MongoClient('mongodb://localhost:27017/')
@@ -295,14 +295,28 @@ class Reading:
     use: bool
     volume: float
     ref: Reference
+    extra: list[dict] = field(default_factory=list)
 
 def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: int, overwrite=True, bitrate: int=192) -> str:
     project_name = cfg["name"]
     ref = reading.ref
+    # normal input file
     input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DOWNLOADS_DIR, f'{reading.id}.mp3')
+    # if has children/extra/multiple audio files
+    extra_data = ""
+    if len(reading.extra) > 0:
+        start_time = 0.0
+        end_time = 0.0
+        for extra_reading in reading.extra:
+            extra_data += f"{extra_reading['id']},{extra_reading['start_time']},{extra_reading['end_time']},{extra_reading['volume']};"
+            end_time += float(extra_reading['end_time']) - float(extra_reading['start_time'])
+        input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_AUDIO, f'{extra_data[:-1]}.mp3')
+        reading.start_time = start_time
+        reading.end_time = end_time
+
     output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{ref.fmt_verse} - {cfg["author"]}.mp3')
 
-    source_data = SourceData(reading.id, reading.start_time, reading.end_time, reading.volume)
+    source_data = SourceData(reading.id, reading.start_time, reading.end_time, reading.volume, extra_data)
     if os.path.exists(output_file):
         previous_data = extract_source_data(output_file)
         if previous_data == source_data:
@@ -443,6 +457,7 @@ def export():
                     content=r["content"],
                     use=r["use"],
                     volume=r["volume"],
+                    extra=r["extra"] or [],
                     ref=ref
                 )
                 if reading.use:
