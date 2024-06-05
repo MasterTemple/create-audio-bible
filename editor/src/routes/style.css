@@ -165,11 +165,6 @@ body {
 /* 	background: var(--hb); */
 /* } */
 
-.button-content {
-	display: flex;
-	align-items: center;
-	text-align: center;
-}
 
 .button-content > div > h3,
 .button-content > h4 {
@@ -199,6 +194,7 @@ h3 {
 
 .row {
 	display: flex;
+	flex-direction: row;
 }
 
 .col {
@@ -413,8 +409,9 @@ input[type='number'] {
 ::-webkit-scrollbar-thumb:hover {
 	background: #555;
 }
-.main-content > .collapsible {
-	/* all: unset; */
-	/* overflow-y: scroll; */
+
+.child-content > div > div {
+	align-items: center;
 }
+
 

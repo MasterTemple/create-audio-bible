@@ -44,7 +44,7 @@
 	function updateChild(childReading) {
 		extraReadings.set(
 			$extraReadings.map((er) => {
-				if (er.i != childReading.i) {
+				if (er?.i != childReading?.i) {
 					childReading;
 				} else {
 					return er;
@@ -52,8 +52,6 @@
 			})
 		);
 		reading.extra = $extraReadings;
-		$bookTree[$openChapter][$openReference] = [reading]
-		saveBookTree()
 	}
 
 	extraReadings.subscribe((ers) => {
@@ -151,7 +149,7 @@
 	</div>
 	<div class="middle-row col">
 		{#each $extraReadings as extraReading}
-			<ExtraReading reading={extraReading} {deleteChild} {updateChild} sid={reading.sid}/>
+			<ExtraReading reading={extraReading} {deleteChild} {updateChild} sid={reading.sid} />
 		{/each}
 	</div>
 	<div class="bottom-row row">
@@ -173,7 +171,19 @@
 			editReading(reading)
 			// edit child readings
 			// reading.extra.forEach((r) => editReading(r))
-			$extraReadings.forEach((er) => er.audio.preload = "auto")
+			$extraReadings.forEach((er) => {
+				er.audio.preload = "auto"
+				er?.audio?.load()
+			})
+			// $bookTree[$openChapter][$openReference] = [reading]
+			$bookTree[$openChapter][$openReference].map((r) => {
+				if(r.sid == reading.sid)
+					return reading
+				else
+					return r
+			})
+			saveBookTree()
+
 		}}>Apply</button>
 		<!-- <button class="use-button" on:click={() => reading.use = true}>{reading.use ? "Using": "Use"}</button> -->
 		<button

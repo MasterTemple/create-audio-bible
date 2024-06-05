@@ -108,7 +108,11 @@
 	function pauseAllAudio() {
 		Object.values($bookTree).forEach((referencesToReadings) =>
 			Object.values(referencesToReadings).forEach((readings) =>
-				readings.forEach((reading) => reading.audio.pause())
+				readings.forEach((reading) => {
+					reading?.audio?.pause()
+					reading?.mergedAudio?.pause()
+					reading?.extra?.forEach((r) => r?.audio?.pause())
+				})
 			)
 		);
 	}

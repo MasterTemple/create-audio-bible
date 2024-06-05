@@ -137,8 +137,9 @@ def merge_files(source_data: SourceData, files: list[str], bitrate=192) -> str:
     return output_file
 
 def add_meta_data(title: str, album: str, author: str, track_number: int, file: str):
-    input_file = file + ".temp"
-    os.rename(file, input_file)
+    # input_file = file + ".temp"
+    input_file = file
+    # os.rename(file, input_file)
     metadata_tags = [
         '-metadata', f'title={title}',
         '-metadata', f'track={track_number}',
@@ -146,5 +147,5 @@ def add_meta_data(title: str, album: str, author: str, track_number: int, file: 
         '-metadata', f'artist={author}'
     ]
     ffmpeg_command = ['ffmpeg', '-i', input_file, *metadata_tags, '-codec', 'copy', file, "-y"]
-    os.remove(input_file)
+    # os.remove(input_file)
     subprocess.run(ffmpeg_command, check=True)

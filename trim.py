@@ -21,7 +21,7 @@ def trim_file(project_name: str, id: str, start_time: float, end_time: float, vo
     output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_AUDIO, f'{id},{start_time},{end_time},{volume}.mp3')
     if not os.path.exists(output_file):
         command = ['ffmpeg', '-loglevel', 'error', '-i', input_file, '-ss', str(start_time),
-                   '-to', str(end_time), '-af', f'volume={volume}', '-b:a', f'{bitrate}k', '-c:a', 'libmp3lame', output_file]
+                   '-to', str(end_time), '-af', f'volume={volume}', '-b:a', f'{bitrate}k', '-c:a', 'libmp3lame', output_file, "-y"]
         subprocess.run(command)
     return output_file
     # with open(output_file, "rb") as f:
