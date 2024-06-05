@@ -14,7 +14,10 @@
 		setConfig,
 		setBookTree,
 		as2DArray,
-		deleteReading
+		deleteReading,
+
+		getAudioSegment
+
 	} from './functions';
 	import { writable } from 'svelte/store';
 
@@ -68,6 +71,7 @@
 				bind:value={reading.start_time}
 				on:input={() => {
 					reading.url = audioUrl(reading);
+					reading.content = getAudioSegment(id, reading.start_time, reading.end_time)
 				}}
 			/>
 		</div>
@@ -78,6 +82,7 @@
 				bind:value={reading.end_time}
 				on:input={() => {
 					reading.url = audioUrl(reading);
+					reading.content = getAudioSegment(id, reading.start_time, reading.end_time)
 				}}
 			/>
 		</div>

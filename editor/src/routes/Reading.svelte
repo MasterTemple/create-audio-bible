@@ -14,7 +14,10 @@
 		setConfig,
 		setBookTree,
 		as2DArray,
-		deleteReading
+		deleteReading,
+
+		getAudioSegment
+
 	} from './functions';
 	import { writable } from 'svelte/store';
 	import ExtraReading from './ExtraReading.svelte';
@@ -24,6 +27,10 @@
 	export let i = 1;
 	export let openNextReading = () => {};
 	const extraReadings = writable(reading.extra);
+	const liveContent = writable(reading.content || "No Audio Content...")
+	if(reading.extra) {
+		 liveContent.set(reading.content + " " + reading.extra.map((r) => r?.content).join(" "))
+	}
 
 	function deleteChild(childReading) {
 		// console.log({childReading})
@@ -52,6 +59,7 @@
 			})
 		);
 		reading.extra = $extraReadings;
+		updateTranscript();
 	}
 
 	extraReadings.subscribe((ers) => {
@@ -69,6 +77,30 @@
 		extraReadings.set(reading.extra)
 	})
 
+	async function updateTranscript() {
+		reading.content = await getAudioSegment(reading.id, reading.start_time, reading.end_time)
+		if(reading?.extra.length > 0) {
+			reading.extra = (await Promise.all(reading.extra.map((r) => {
+				return getAudioSegment(r.id, r.start_time, r.end_time).then((content) => {
+					return {
+						...r,
+						content
+					}
+				})
+			})))
+			console.log({extra: reading.extra})
+			liveContent.set(reading.content + " " + reading.extra.map((r) => r.content).join(" "))
+		}
+		else {
+			liveContent.set(reading.content)
+		}
+		// liveContent.set(reading.content + " " + extraContent)
+	}
+
+	// async function updateTranscriptFromChild() {
+	// 	updateTranscript();
+	// }
+
 	// console.log({reading})
 
 </script>
@@ -80,7 +112,7 @@
 	class:reading-selected={$openReading == reading.sid}
 >
 	<h4>Reading {i + 1}</h4>
-	<p>{reading.content || 'No audio content...'}</p>
+	<p>{$liveContent}</p>
 </button>
 <div
 	id={reading.sid}
@@ -99,8 +131,9 @@
 			<input
 				type="number"
 				bind:value={reading.start_time}
-				on:input={() => {
+				on:input={async() => {
 					reading.url = audioUrl(reading);
+					updateTranscript()
 				}}
 			/>
 		</div>
@@ -109,8 +142,9 @@
 			<input
 				type="number"
 				bind:value={reading.end_time}
-				on:input={() => {
+				on:input={async() => {
 					reading.url = audioUrl(reading);
+					updateTranscript()
 				}}
 			/>
 		</div>
@@ -182,7 +216,9 @@
 				else
 					return r
 			})
-			saveBookTree()
+			updateTranscript().then(() => {
+				saveBookTree()
+			})
 
 		}}>Apply</button>
 		<!-- <button class="use-button" on:click={() => reading.use = true}>{reading.use ? "Using": "Use"}</button> -->

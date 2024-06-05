@@ -260,3 +260,19 @@ export async function setBookTree() {
 	}
 	bookTree.set(tree);
 }
+
+/**
+* @param {String} file -
+* @param {Number} start -
+* @param {Number} end -
+* @returns {String}
+*/
+export async function getAudioSegment(id, start, end) {
+		let { content } = await json_post("/get_transcript", {
+			source_id: id,
+			start_time: start,
+			end_time: end,
+	})
+	console.log({content})
+	return content;
+}

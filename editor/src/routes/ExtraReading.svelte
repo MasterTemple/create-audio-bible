@@ -1,14 +1,17 @@
 <script>
 	import { openChapter, openReference, openReading, bookTree } from './stores';
 	import {
-		audioUrl,
+		audioUrl, getAudioSegment, json_post,
 	} from './functions';
 	import { writable } from 'svelte/store';
 	import { onMount } from 'svelte';
+
 	export let reading = {};
 	export let deleteChild = () => {};
 	export let updateChild = () => {};
 	export let sid;
+	// export let updateTranscriptFromChild = () => {};
+
 	let url = writable("")
 	function updateValue() {
 		reading.url = audioUrl(reading);
@@ -22,6 +25,31 @@
 		reading.url = audioUrl(reading);
 		url.set(reading.url)
 	})
+	async function updateChildTranscript() {
+		reading.content = await getAudioSegment(reading.id, reading.start_time, reading.end_time)
+		// updateTranscriptFromChild()
+		updateChild(reading)
+	}
+
+	async function createReading() {
+		let res = await json_post("/create_reading", {
+			source_id: reading.id,
+			start_time: reading.start_time,
+			end_time: reading.end_time,
+			reference: $openReference
+		})
+		reading = {
+			...reading,
+			...res.reading,
+			// audio: reading.audio,
+			// sid: `${reading.id}-${res.reading.start_seg}-${res.reading.end_seg}`,
+			// reference: $openReference,
+		}
+		// reading.content = words.join(" ");
+		$bookTree[$openChapter][$openReference] = [reading]
+		saveBookTree()
+	}
+
 </script>
 
 <div class="child-content verse">
@@ -38,6 +66,7 @@
 			<input
 				type="number"
 				bind:value={reading.start_time}
+					on:input={async() => updateChildTranscript}
 				/> <!-- on:input={updateValue} /> -->
 		</div>
 		<div class="end_time">
@@ -45,6 +74,7 @@
 			<input
 				type="number"
 				bind:value={reading.end_time}
+					on:input={async() => updateChildTranscript}
 				/> <!-- on:input={updateValue} /> -->
 		</div>
 		<div class="volume">
