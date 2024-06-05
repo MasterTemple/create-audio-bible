@@ -303,6 +303,8 @@ def create_verse_audio_file(cfg: dict[str,str], reading: Reading, track_number: 
     ref = reading.ref
     # normal input file
     input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DOWNLOADS_DIR, f'{reading.id}.mp3')
+    if not os.path.exists(input_file):
+        return
     # if has children/extra/multiple audio files
     extra_data = ""
     # print(reading)
@@ -376,6 +378,7 @@ def create_chapter_audio_file(cfg: dict[str,str], files_to_join: list[str], read
     output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_CHAPTERS, f'{ref.fmt_chapter} - {cfg["author"]}.mp3')
 
 
+    # print(readings)
     source_data_id = ";".join([",".join([reading.id, str(reading.start_time), str(reading.end_time), str(reading.volume)]) for reading in readings])
     # it is still unique, don't ask
     source_data = SourceData(
@@ -453,7 +456,7 @@ def export():
             )
             for r in readings:
                 reading = Reading(
-                    id=r["id"],
+                    id=str(r["id"]),
                     start_time=r["start_time"],
                     end_time=r["end_time"],
                     start_seg=r["start_seg"],
@@ -484,6 +487,8 @@ def export():
             # copy file
             input_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_AUDIO, f'{extra_data[:-1]}.mp3')
             output_file = os.path.join(PROJECT_DIR, project_name, PROJECT_DIR_EXPORT_VERSES, f'{reading.ref.fmt_verse} - {cfg["author"]}.mp3')
+            if extract_source_data(input_file) == extract_source_data(output_file):
+                continue
             with open(input_file, "rb") as ifb:
                 with open(output_file, "wb") as ofb:
                     ofb.write(ifb.read())

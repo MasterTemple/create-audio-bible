@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from mutagen.easyid3 import EasyID3
+import mutagen.id3
 import subprocess
 from mutagen import mp3
 from mutagen.id3 import ID3, APIC, TIT2, TXXX, ID3NoHeaderError
@@ -23,6 +25,8 @@ def get_db_name() -> str:
 
 
 def add_album_art(input_file: str):
+    if not os.path.exists(input_file):
+        return
     cover_image = get_project_config()["cover_image"]
     audio = ID3(input_file)
     with open(cover_image, 'rb') as image_file:
@@ -136,16 +140,57 @@ def merge_files(source_data: SourceData, files: list[str], bitrate=192) -> str:
     os.remove(temp)
     return output_file
 
-def add_meta_data(title: str, album: str, author: str, track_number: int, file: str):
-    # input_file = file + ".temp"
-    input_file = file
-    # os.rename(file, input_file)
-    metadata_tags = [
-        '-metadata', f'title={title}',
-        '-metadata', f'track={track_number}',
-        '-metadata', f'album={album}',
-        '-metadata', f'artist={author}'
-    ]
-    ffmpeg_command = ['ffmpeg', '-i', input_file, *metadata_tags, '-codec', 'copy', file, "-y"]
-    # os.remove(input_file)
-    subprocess.run(ffmpeg_command, check=True)
+# def add_meta_data(title: str, album: str, author: str, track_number: int, file: str):
+#     # input_file = file + ".temp"
+#     input_file = file
+#     # os.rename(file, input_file)
+#     metadata_tags = [
+#         '-metadata', f'title={title}',
+#         '-metadata', f'track={track_number}',
+#         '-metadata', f'album={album}',
+#         '-metadata', f'artist={author}'
+#     ]
+#     ffmpeg_command = ['ffmpeg', '-i', input_file, *metadata_tags, '-codec', 'copy', file, "-y"]
+#     # os.remove(input_file)
+#     subprocess.run(ffmpeg_command, check=True)
+
+
+
+def add_meta_data(title: str, album: str, artist: str, track_number: int, file_path: str):
+    try:
+        # Load the MP3 file
+        audio = EasyID3(file_path)
+        
+        # Edit metadata fields
+        if title:
+            audio['title'] = title
+        if album:
+            audio['album'] = album
+        if artist:
+            audio['artist'] = artist
+        if track_number:
+            audio['tracknumber'] = str(track_number)
+        
+        # Save changes
+        audio.save()
+        
+        print(f"Metadata for '{file_path}' updated successfully.")
+        
+    except:
+        print(f"No ID3 header found in '{file_path}', adding ID3 header and metadata.")
+        audio = mutagen.File(file_path, easy=True)
+        audio.add_tags()
+        
+        # Edit metadata fields
+        if title:
+            audio['title'] = title
+        if album:
+            audio['album'] = album
+        if artist:
+            audio['artist'] = artist
+        if track_number:
+            audio['tracknumber'] = str(track_number)
+        
+        # Save changes
+        audio.save()
+        print(f"Metadata for '{file_path}' updated successfully.")
