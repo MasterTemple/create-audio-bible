@@ -223,7 +223,8 @@ export async function setBookTree() {
 		// const chapterNumber = parseInt(reference.match(/\d+(?=:)/g)[0]);
 		// console.log({chapter, reference, chapterNumber, bool: chapterNumber > 2})
 		let oneIsUsed = false;
-		tree[chapter][reference] = readings.slice(0, 5).map((r) => {
+		// tree[chapter][reference] = readings.slice(0, 5).map((r) => {
+		tree[chapter][reference] = readings.map((r) => {
 			if (r.use) oneIsUsed = true;
 			return {
 				...r,

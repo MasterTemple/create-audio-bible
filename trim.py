@@ -34,7 +34,7 @@ def trim_all_findings():
     project_name = get_current_project()
     with open(os.path.join(PROJECT_DIR, project_name, PROJECT_JSON_DIR, JSON_READINGS_FILE), "r") as f:
         data = json.load(f)
-    break_stop = 5
+    break_stop = 100
     for ref, finds in data.items():
         early_break = False
         for i, r in enumerate(finds):

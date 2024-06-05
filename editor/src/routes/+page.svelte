@@ -18,6 +18,23 @@
 		if (readingId) openReading.set(readingId);
 	}
 
+	// /**
+	//  * @param {string} reference
+	//  */
+	// function openUsedReading(reference) {
+	// 	// openReference.set(reference);
+	// 	if(Object.keys($bookTree[$openChapter]).every(k => k != reference))
+	// 		return
+	// 	const reading = $bookTree[$openChapter][reference].find((r) => r?.use);
+	// 	console.log({reference, $openChapter, c: $bookTree[$openChapter], r: $bookTree[$openChapter][reference]})
+	// 	const readingId = reading?.sid;
+	// 	// const readingId = document
+	// 	// 	.getElementById(asId(reference))
+	// 	// 	?.querySelector(`div:nth-child(${1 + (2*useIndex)})`)?.id;
+	// 	// some references have no readings
+	// 	if (readingId) openReading.set(readingId);
+	// }
+
 	/**
 	 * @param {string} reference
 	 */
@@ -136,6 +153,9 @@
 
 				e.preventDefault();
 			}
+			else if(e.key == "Enter") {
+				document.querySelector("button.use-button").click();
+			}
 		});
 		// get project name & config
 		await setConfig();
@@ -152,6 +172,7 @@
 		openReference.subscribe((r) => {
 			// scrollIntoMiddle()
 			openFirstReading(r);
+			// openUsedReading(r)
 		});
 		// when a new reading is opened
 		openReading.subscribe((r) => {

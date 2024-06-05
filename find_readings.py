@@ -120,8 +120,8 @@ def find_readings(ref: Reference) -> list[Reading]:
                         content
                     )
                 )
-            if len(readings) == 5:
-                break
+            # if len(readings) == 5:
+            #     break
         if len(readings) > 0:
             break
     return readings

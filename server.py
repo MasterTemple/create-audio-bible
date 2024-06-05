@@ -71,7 +71,7 @@ def get_transcript():
     end_time = data["end_time"]
     # reference = data["reference"]
     start_seg = next((v for v in segments.values() if v['source'] == source_id and v['start'] >= start_time), None)['id']
-    end_seg = next((v for v in segments.values() if v['source'] == source_id and v['end'] >= end_time), None)['id']
+    end_seg = next((v for v in segments.values() if v['source'] == source_id and v['end'] > end_time), None)['id']
 
     for i in range(start_seg, end_seg + 1):
         word_list.append(segments[i]['content'])
