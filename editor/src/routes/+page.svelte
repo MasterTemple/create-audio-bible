@@ -71,14 +71,21 @@
 			const readingsSize = [...document.querySelectorAll(`.button-content.reading`)].find(
 				(r) => r?.scrollHeight && r?.scrollHeight > 0
 			)?.scrollHeight;
+			console.log({
+				chaptersBefore, chapterSize,
+				versesBefore, verseSize,
+				readingsBefore, readingsSize,
+			})
 
 			if (!verseSize || !readingsSize) {
 				setTimeout(() => scrollIntoMiddle(id), 100);
 				return;
 			}
 
+			const margin = ((chaptersBefore - 1) * 20) + ((versesBefore - 1) * 20) + ((readingsBefore - 1) * 20)
 			const newScroll =
-				chaptersBefore * chapterSize + versesBefore * verseSize + readingsBefore * readingsSize;
+				chaptersBefore * chapterSize + versesBefore * verseSize + readingsBefore * (readingsSize) + margin
+
 
 			const interval = setInterval(() => {
 				// console.log(document.querySelector('.main-content').scrollTop);
